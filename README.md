@@ -1,14 +1,14 @@
 # Prompt Architect
 
-An Agent Skill that turns any rough idea — in Turkish or English — into a domain-classified, pattern-aware, quality-reviewed expert prompt. Optionally executes the prompt and writes the deliverable to disk.
+An Agent Skill that turns any rough idea into a domain-classified, pattern-aware, quality-reviewed expert prompt. Optionally executes the prompt and writes the deliverable to disk. Supports input in Turkish and English.
 
-Built on Anthropic's official Claude prompting practices (UI/chat-compatible patterns only) and a minimal set of global authoring rules.
+**Purpose-built for Claude.** This skill is designed specifically for the Claude family (Claude Code, claude.ai, and Agent Skills-compatible clients) and follows Anthropic's official prompting practices end-to-end — taxonomy, patterns, quality gates, and adherence rules. Refined prompt outputs remain portable to other instruction-tuned LLMs, but the skill's internal workflow is tuned for Claude.
 
 ---
 
 ## What it does
 
-Given a vague input like `"onboarding stratejisi hazırla"` or `"design an API for X"`, the skill:
+Given a vague input like `"build an onboarding strategy"` or `"design an API for X"`, the skill:
 
 1. **Analyzes** the input — objective, constraints, complexity score (simple / moderate / complex).
 2. **Classifies** the domain against a 25-domain taxonomy with TR + EN signal keywords.
@@ -35,23 +35,23 @@ That's it. Claude Code auto-discovers skills under `~/.claude/skills/`. Restart 
 
 The skill fires on natural-language triggers (no slash command required):
 
-- `prompt yaz`, `refine my prompt`, `turn this into an expert prompt`
-- `domain analizi yap`, `strateji hazırla`, `plan oluştur`
+- `refine my prompt`, `turn this into an expert prompt`, `write a prompt for…`
+- `do a domain analysis`, `build a strategy`, `create a plan`
 - Or just describe a task and ask for it to be elevated
 
 ### Modes
 
 | You want… | Say something like… | Mode |
 |---|---|---|
-| Just the refined prompt | `prompt yaz`, `sadece prompt`, `just the prompt` | `prompt_only` (default) |
-| Prompt + the actual deliverable | `çalıştır`, `execute et`, `run it`, `sonucu da üret` | `prompt_and_execute` |
+| Just the refined prompt | `just the prompt`, `prompt only`, `don't run it` | `prompt_only` (default) |
+| Prompt + the actual deliverable | `run it`, `execute it`, `generate the output too`, `do it as well` | `prompt_and_execute` |
 
 ---
 
 ## Example
 
 **Input:**
-> onboarding stratejisi hazırla, b2b saas için, çalıştır
+> build an onboarding strategy for a B2B SaaS, and run it
 
 **Output (abbreviated):**
 
@@ -102,7 +102,7 @@ prompt-architect/
 ## Key design choices
 
 - **UI-compatible only.** Patterns that require API-level access (assistant prefill, request-level `thinking`, `stop_sequences`, `tool_choice`) are explicitly out of scope. Everything here works in a regular chat window.
-- **Bilingual triggers, English body.** Section labels mirror the user's language; the refined prompt body is always English for cross-model portability.
+- **Bilingual input, English body.** The skill accepts Turkish or English input and mirrors section labels in the user's language; the refined prompt body is always written in English for cross-model portability.
 - **Minimum-viable patterns.** The skill picks 3–6 patterns per task, not all 9. Simplicity wins.
 - **Don't over-ask.** A clarifying question is allowed only if the input is genuinely unusable (single word, internally contradictory, zero domain signal). Otherwise, infer and state assumptions.
 - **File output discipline.** In execute mode, structured deliverables (>~50 lines or document-shaped content) are saved to disk with a short slug; only summaries print inline.
@@ -142,6 +142,12 @@ MIT.
 ---
 
 ## Sources
+
+The full source library used while building this skill is available as a NotebookLM notebook — you can browse, query, and chat with the underlying documents directly:
+
+**[Prompt Architect — Source Notebook (NotebookLM)](https://notebooklm.google.com/notebook/a491d060-7049-4279-8c37-f0e6ad58fc67)**
+
+Primary sources include:
 
 - *Prompting 101 | Code w/ Claude* — primary structural source (5-component prompt model).
 - Anthropic Claude API docs — prompt engineering overview and best practices.
