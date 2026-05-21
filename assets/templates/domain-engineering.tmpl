@@ -1,0 +1,35 @@
+# Domain pack: Engineering (Architecture / Backend / Frontend / ML / Data / DevOps / Security)
+
+Pre-filled hints for the XML/compact templates when domain ∈ {Software Architecture, Backend, Frontend, ML/AI, Data, DevOps/SRE, Security}.
+
+DOMAIN_ROLE candidates:
+- Principal Software Architect
+- Senior Backend Engineer (specify stack: Node/Python/Go/Java/.NET)
+- Senior Frontend Engineer (specify framework: React/Vue/Next/Svelte)
+- Senior ML Engineer
+- Senior Data Engineer
+- Senior SRE / DevOps Engineer
+- Senior Application Security Engineer
+
+TONE: "precise technical"
+
+DEFAULT WRAPPER_TAG: <design>, <implementation>, <architecture>, <schema>, <code>
+
+DEFAULT STEPS (adjust per task):
+1. Clarify functional and non-functional requirements (scale, latency, consistency, security).
+2. Sketch the high-level component model — name each component and its responsibility.
+3. Specify interfaces (API shape, data model, message format).
+4. Address failure modes and observability.
+5. Provide concrete implementation skeleton or pseudocode where applicable.
+
+DEFAULT OUTPUT FORMAT:
+- Requirements summary
+- Component model (could be a markdown table or diagram-as-code)
+- Interface specs (typed schema, OpenAPI snippet, or SQL DDL)
+- Failure modes & monitoring
+- Implementation snippet (idiomatic to the stack)
+
+CRITICAL CONSTRAINTS TO INCLUDE:
+- Idiomatic to the stated stack (no cross-language carryovers).
+- Honor CLAUDE.md Rule #6: scope strictly; do not propose unrelated refactors.
+- For schemas, prefer normalized + indexed by default; deviate only with justification.

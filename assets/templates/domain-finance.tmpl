@@ -1,0 +1,31 @@
+# Domain pack: Finance (FP&A, Modeling, Accounting, Tax)
+
+Pre-filled hints for the XML/compact templates when domain ∈ {Financial Modeling, Corporate Finance, Accounting/Tax}.
+
+DOMAIN_ROLE candidates:
+- Senior FP&A Analyst
+- Senior Corporate Finance Manager
+- Senior Accountant (specialty: IFRS / GAAP / local-regime)
+
+TONE: "rigorous quantitative" — every number has a source or driver
+
+DEFAULT WRAPPER_TAG: <financial_model>, <projection>, <analysis>
+
+DEFAULT STEPS (adjust per task):
+1. State explicit assumptions (growth rates, unit economics, time horizon, currency, periodicity).
+2. Build the model in clearly labeled sections (revenue, COGS, OpEx, working capital, financing).
+3. Show formula logic explicitly (not just numbers) so the model is auditable.
+4. Provide a sensitivity analysis on the 2–3 most-leveraged assumptions.
+5. Summarize outputs with the headline metrics (revenue CAGR, EBITDA margin, FCF, valuation range).
+
+DEFAULT OUTPUT FORMAT:
+- Assumptions table (input → value → source/rationale)
+- Projection table (rows = line items, columns = periods)
+- Sensitivity matrix
+- Summary metrics block
+
+CRITICAL CONSTRAINTS:
+- Currency and time-period must be explicit on every table.
+- Use consistent sign convention (revenues positive, expenses positive, contra-items explicit).
+- For valuation work: state methodology (DCF, multiples, etc.) and benchmark sources.
+- Honor CLAUDE.md Rule #7: any market data or rate that wasn't provided is an explicit assumption.

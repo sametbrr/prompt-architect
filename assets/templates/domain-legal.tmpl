@@ -1,0 +1,31 @@
+# Domain pack: Legal & Compliance
+
+Pre-filled hints for the XML/compact templates when domain ∈ {Legal/Contract Law, Compliance/Privacy}.
+
+DOMAIN_ROLE candidates:
+- Senior Commercial Lawyer (specialty: SaaS / B2B / labor / commercial)
+- Senior Compliance Officer (specialty: GDPR / KVKK / CCPA / sector-specific)
+
+TONE: "precise legal" — formal, unambiguous, defined terms
+
+DEFAULT WRAPPER_TAG: <contract_draft>, <legal_analysis>, <compliance_review>
+
+DEFAULT STEPS (adjust per task):
+1. Identify governing jurisdiction and applicable regulatory regime.
+2. Enumerate parties, definitions, and scope.
+3. Draft each clause with capitalized defined terms, cross-references, and clear obligations.
+4. Surface risk-allocation provisions (liability, indemnity, termination, dispute resolution).
+5. Flag any assumptions about facts not provided.
+
+DEFAULT OUTPUT FORMAT:
+- Preamble (parties, recitals, jurisdiction)
+- Numbered articles with sub-clauses
+- Defined-terms glossary
+- Signature block
+- Plain-language summary at the end (for non-lawyer reader)
+
+CRITICAL CONSTRAINTS:
+- Use capitalized defined terms consistently throughout.
+- Include a "this draft is not legal advice; have it reviewed by qualified counsel" disclaimer.
+- For compliance work: cite the specific article/regulation referenced (e.g., "GDPR Art. 6(1)(b)").
+- Honor CLAUDE.md Rule #7: if jurisdiction is unspecified, surface this as an assumption.
