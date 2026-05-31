@@ -3,7 +3,7 @@ name: prompt-architect
 description: Architects any user input (in any language) into a structured, domain-aware expert prompt — classifies the domain, selects the right prompting patterns, drafts a refined English prompt, runs an 8-gate self-review, and optionally executes the deliverable. Use this skill whenever the user wants to turn a rough idea or request into a professionally engineered prompt, especially when the input involves strategy, UX, product, marketing, technical writing, business analysis, or any specialized domain. Trigger this skill when the user says things like "prompt yaz", "refine my prompt", "turn this into an expert prompt", "domain analizi yap", "strateji hazırla", "plan oluştur", or provides a task description in any language and wants it elevated into a structured, actionable expert-level output. Always use this skill when the request involves multi-step domain classification + prompt generation + optional execution.
 compatibility: Designed for Claude Code and other Agent Skills-compatible clients. Refined prompt outputs are portable to any modern instruction-tuned LLM (Claude, GPT, Gemini).
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
   author: sametbrr@gmail.com
   created: "2026-05-21"
   changelog: references/CHANGELOG.md
