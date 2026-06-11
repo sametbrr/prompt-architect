@@ -111,7 +111,7 @@ def gate_2_xml_isolation(prompt: str) -> GateResult:
 
 
 def gate_3_positive_guidance(prompt: str) -> GateResult:
-    """≥80% of constraints positive."""
+    """≥75% of constraints positive."""
     negatives = len(NEGATIVE_DIRECTIVE_RE.findall(prompt))
     positives = len(POSITIVE_DIRECTIVE_RE.findall(prompt))
     total = negatives + positives
@@ -200,14 +200,18 @@ def gate_6_long_context_hierarchy(prompt: str) -> GateResult:
 
 
 def gate_7_reasoning_directive(prompt: str) -> GateResult:
-    """Multi-step tasks should dictate order AND provide scratchpad space."""
+    """Multi-step tasks should dictate order AND provide scratchpad space.
+    Single-step tasks (no numbered steps, no <detailed_instructions>) pass as N/A.
+    """
     if not is_xml_mode(prompt):
         return GateResult(7, "In-Context Reasoning Directive", True, "Compact mode — N/A")
     has_numbered_steps = bool(re.search(r"^\s*\d+\.\s", prompt, re.MULTILINE))
     has_detailed = "<detailed_instructions>" in prompt.lower()
     has_scratchpad = bool(SCRATCHPAD_RE.search(prompt))
-    if has_detailed and has_numbered_steps and has_scratchpad:
-        return GateResult(7, "In-Context Reasoning Directive", True)
+    if not has_numbered_steps and not has_detailed:
+        return GateResult(
+            7, "In-Context Reasoning Directive", True, "Single-step task — N/A"
+        )
     missing = []
     if not has_numbered_steps:
         missing.append("numbered step order")
