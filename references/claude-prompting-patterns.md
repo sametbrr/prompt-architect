@@ -1,8 +1,10 @@
-# Claude Prompting Patterns (UI/Chat-Compatible)
+# Claude Prompting Patterns
 
-Source: distilled from Anthropic's "Prompting 101 | Code w/ Claude" video transcript, Claude API docs (overview, best practices), and the interactive prompt-engineering tutorial — filtered to patterns that work in chat/UI environments (Claude Code, claude.ai, Claude Desktop). Request-level API features (assistant prefill, `thinking` parameter, `stop_sequences`, `tool_choice`) are NOT covered here.
+Source: Anthropic's current prompting canon (`claude-prompting-best-practices`, `prompt-engineering/overview`, the per-model prompting guides), the "Prompting 101 | Code w/ Claude" video, and the interactive prompt-engineering tutorial. Last reconciled against the live docs **2026-07-31**.
 
-XML/tag-based patterns work in BOTH API and UI because the tags are part of the prompt text content — Claude is fine-tuned to respect them regardless of where the text comes from.
+Patterns 1–9 are the portable core: they are text-level, so they work identically in the API and in chat clients. Patterns 10–14 were added in v3.0.0 to cover behaviours the Claude 5 generation introduced. **Model-specific deltas live in [`models/`](models/) — read `models/_matrix.md` before selecting patterns.**
+
+> **v3.0.0 note.** The earlier "API-only, out of scope" framing was retired. Prefill was not merely unavailable in chat — it has been **removed** (a 400 on Claude 4.6+). `thinking` and `effort` are not API trivia either; they are surfaced in Claude Code and change how a prompt should be written. See [Harness-level controls](#harness-level-controls).
 
 ---
 
@@ -55,23 +57,29 @@ XML/tag-based patterns work in BOTH API and UI because the tags are part of the 
 
 ---
 
-## 4. In-Context Chain-of-Thought
+## 4. Operational Reasoning Sequence
 
 **When to use:** Multi-step analysis, classification with edge cases, anything where the model has historically hallucinated.
 
-**How to apply (UI):** Inside `<detailed_instructions>`, explicitly dictate the reasoning sequence ("first analyze X, then proceed to Y"). For deeper reasoning, instruct the model to write its analysis inside a `<scratchpad>` or `<thinking>` tag before producing the final answer.
+**How to apply:** Inside `<detailed_instructions>`, dictate the reasoning sequence explicitly ("first analyze X, then proceed to Y"). State *why* the order matters when it isn't obvious.
 
 **Mini example:**
 ```
 <detailed_instructions>
 1. First, read the form fields and identify which checkboxes are marked.
 2. Then, examine the sketch and identify visual elements.
-3. Finally, cross-reference the two and write your verdict inside <final_verdict> tags.
-Write your intermediate reasoning inside <scratchpad> tags before the final verdict.
+3. Finally, cross-reference the two, treating the form as ground truth.
 </detailed_instructions>
 ```
 
-**API-only variant (out of scope):** Request-level `thinking: {type: "enabled", budget_tokens: ...}` parameter — used via the API only. The in-context tag version above is the UI equivalent and works everywhere.
+> ### ⚠️ Do not ask the model to echo its reasoning
+>
+> Until v2.2.1 this pattern ended with *"write your intermediate reasoning inside `<scratchpad>` tags."* **That instruction is now removed**, for two reasons:
+>
+> - On **Fable 5 / Mythos 5** it is a hazard. Instructions telling the model to echo, transcribe, or explain its internal reasoning as response text can trigger the `reasoning_extraction` refusal category and cause elevated fallback to Opus 4.8.
+> - On **Opus 5** thinking is on by default, so a scratchpad directive duplicates work the model already does and inflates output.
+>
+> Dictating the *order* of operations is still valuable — that is what this pattern now is. If an application needs reasoning visibility, read the structured `thinking` blocks from adaptive thinking rather than asking for them in prose.
 
 ---
 
@@ -79,7 +87,9 @@ Write your intermediate reasoning inside <scratchpad> tags before the final verd
 
 **When to use:** When format, tone, or edge-case handling must be learned by demonstration rather than description.
 
-**How to apply (UI):** Provide 2–5 input/output pairs inside `<examples>` tags. Each example should be a `<example>` with `<input>` and `<output>` sub-tags. Cover gray-area cases (the ones where the model historically erred), not just happy paths.
+**How to apply:** Provide **3–5** input/output pairs inside `<examples>` tags (the canon's recommended range). Each example is an `<example>` with `<input>` and `<output>` sub-tags. Make them *relevant* (mirror the real use case), *diverse* (vary enough that no unintended pattern is learned), and cover gray-area cases — not just happy paths.
+
+**Tip from the canon:** you can ask Claude to evaluate your examples for relevance and diversity, or to generate more from an initial set.
 
 **Mini example:**
 ```
@@ -124,7 +134,21 @@ Use markdown headings inside the wrapper. Do not include any prose outside the w
 </output_format>
 ```
 
-**API-only variant (out of scope):** Assistant-message prefilling (starting the assistant's response with `<onboarding_plan>` so Claude continues from there) — API only. The wrapper-tag instruction above is the UI equivalent.
+> ### Prefill is gone — this is its replacement
+>
+> Until v2.2.1 this pattern described assistant-message prefilling as an "API-only variant". That was wrong in a way that matters: **prefilled assistant messages on the final turn are unsupported from Claude 4.6 onward and return a 400.**
+>
+> Anthropic's prescribed migrations, by original purpose:
+>
+> | Was prefilled to… | Use instead |
+> |---|---|
+> | Force a JSON/YAML/classification shape | **Structured Outputs** (schema-constrained), or a tool with an enum field for labels. Newer models also match complex schemas reliably when simply told to |
+> | Skip preambles | *"Respond directly without preamble. Do not start with phrases like 'Here is…' or 'Based on…'"* — or the wrapper tag above. Strip stragglers in post-processing |
+> | Steer around bad refusals | Nothing needed; refusal behaviour is much better |
+> | Continue an interrupted response | Move it to the user turn: *"Your previous response was interrupted and ended with [text]. Continue from where you left off."* |
+> | Re-inject context in long chats | Put the reminder in the user turn; in agentic systems hydrate through tools or during context compaction |
+>
+> The wrapper-tag instruction remains the right default for parseable output. Reach for Structured Outputs when the schema is strict.
 
 ---
 
@@ -154,12 +178,89 @@ Use markdown headings inside the wrapper. Do not include any prose outside the w
 
 ---
 
-## Patterns Explicitly Out of Scope (API-only)
+---
 
-The following are powerful but unavailable in chat/UI environments. Skip them entirely when refining prompts for Claude Code, claude.ai, or Claude Desktop:
+# Claude 5 generation patterns (10–14)
 
-- **Assistant-message prefill** — Starting the assistant turn with partial content in the API request. Replaced by Pattern #7 (closing-tag instruction).
-- **Request-level `thinking` parameter** — Enabling extended thinking via API. Replaced by Pattern #4 (in-context `<scratchpad>` instruction).
-- **`stop_sequences`** — Premature termination tokens. No UI equivalent; structure output via Pattern #7 instead.
-- **`tool_choice` / structured tool schemas** — API-managed tool routing. Not applicable to standalone prompts.
-- **Batch API / Files API** — Bulk processing endpoints. Out of scope for single-prompt refinement.
+These address behaviours the Claude 5 generation introduced. Whether each applies — and how strongly — is decided by the target model's profile in [`models/`](models/). Do not apply them blindly; two of them are mutually exclusive across models.
+
+## 10. Intent Framing
+
+**When to use:** Always worthwhile; **weighted heavily on Fable 5**, which connects a task to relevant information better when it understands the intent behind it.
+
+**How to apply:** A `<why>` block before `<task>`, naming the larger goal, the audience, and what the output enables.
+
+```
+<why>
+I'm working on [the larger task] for [who it's for]. They need [what the output enables].
+</why>
+```
+
+Also applies at the constraint level: *"Your response will be read aloud by a text-to-speech engine, so never use ellipses"* outperforms *"NEVER use ellipses"*. Claude generalises from the explanation.
+
+## 11. Scope Boundaries
+
+**When to use:** Any execute-mode prompt. **Required for Opus 5** (which can widen a task on its own) **and Fable 5** (which can take unrequested actions).
+
+**How to apply:** A `<scope_boundaries>` block stating what to deliver and what to stop short of.
+
+```
+Deliver what was asked, at the scope intended. Make routine judgment calls yourself, and
+check in only when different readings of the request would lead to materially different
+work. Finish the whole task, and stop short of actions clearly beyond what was asked.
+```
+
+For assessment-type requests, Fable 5's sharper form: *"When the user is describing a problem or thinking out loud rather than requesting a change, the deliverable is your assessment. Report your findings and stop."*
+
+**Note on framing:** this pattern legitimately uses negative constraints. Anthropic's own scope-containment block is almost entirely negative. Gate 3 exempts constraint lists for exactly this reason.
+
+## 12. Verbosity Control
+
+**When to use:** **Mandatory on Opus 5** — its default responses run long and `effort` does not reliably shorten visible output. Optional elsewhere, where length already tracks task complexity.
+
+**How to apply:** A `<tone_preference>` block, plus a short restatement near the end of a long prompt.
+
+```
+Keep responses focused, brief, and concise. Keep disclaimers and caveats short, and spend
+most of the response on the main answer. When asked to explain something, give a high-level
+summary unless an in-depth explanation is specifically requested.
+```
+
+**On Sonnet 5 and Opus 4.8, show rather than forbid** — a positive example of the right concision beats an instruction naming the verbosity to avoid.
+
+## 13. Delegation Policy
+
+**When to use:** Any prompt whose harness supports subagents, targeting **Opus 5** (delegates readily), **Opus 4.8**, or **Fable 5** (parallel subagents). Sonnet 5's guide has no subagent section — skip it there.
+
+```
+Delegate to a subagent only for large tasks that are genuinely independent and
+parallelizable. Do not delegate work you can finish yourself in a handful of tool calls,
+and do not use subagents to verify or double-check your own work. Keep spawn counts low.
+```
+
+**⚠️ Model-divergent.** On **Opus 5**, also *remove* any verification instruction — it self-verifies, and asking causes over-verification. On **Fable 5**, do the opposite: add interval self-verification with fresh-context verifier subagents. These two are direct opposites; the profile decides.
+
+## 14. Checkpoint Policy
+
+**When to use:** Long-running or agentic prompts. Strongest signal on Fable 5, where a brief instruction replaces an enumerated list of stop conditions.
+
+```
+Pause for the user only when the work genuinely requires them: a destructive or irreversible
+action, a real scope change, or input that only they can provide. If you hit one of these,
+ask and end the turn, rather than ending on a promise.
+```
+
+---
+
+# Harness-level controls
+
+Not prompt text, but they change how the prompt should be written. Formerly (and wrongly) filed as "API-only, out of scope".
+
+| Control | Why it matters here |
+|---|---|
+| **`effort`** | The primary intelligence/latency/cost lever, surfaced in Claude Code. Higher effort means more unrequested thoroughness — pair it with Pattern 11. Defaults differ per model; see the profile |
+| **`thinking`** | On by default on Opus 5; disable only at effort `high` or below. Prefer thinking-on at `low` effort over thinking-off. Never instruct the model *not* to think — that increases tag leakage |
+| **`budget_tokens`** | **Removed.** Deprecated on 4.6, returns a 400 on Claude 4.7+. Lower `effort` or cap `max_tokens` instead |
+| **Structured Outputs** | The schema-constrained replacement for prefill-based formatting. Prefer it over prose format instructions when the schema is strict |
+| **Prefill** | **Unsupported from Claude 4.6 onward** (400). See Pattern 7 for migrations |
+| **`stop_sequences`** | Still API-level. Structure output via Pattern 7 instead |

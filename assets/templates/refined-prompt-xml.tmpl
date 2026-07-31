@@ -1,5 +1,10 @@
 <role>You are a {SENIORITY} {DOMAIN_ROLE} with {YEARS}+ years of experience in {SPECIALTY_AREA}. Communicate in {TONE} tone.</role>
 
+<why>
+{WHY_THIS_MATTERS_AND_WHAT_THE_OUTPUT_ENABLES}
+{REMOVE_THIS_TAG_ONLY_IF_INTENT_IS_SELF_EVIDENT}
+</why>
+
 <task>
 {ONE_SENTENCE_OBJECTIVE}.
 
@@ -18,13 +23,17 @@ Operational steps:
 <detailed_instructions>
 {HOW_TO_APPROACH_EACH_STEP}
 {ORDER_RATIONALE_IF_NON_OBVIOUS}
-Write intermediate reasoning inside <scratchpad>...</scratchpad> before producing the final answer.
 </detailed_instructions>
 
 <examples>
-{INCLUDE_2_TO_5_PAIRS_ONLY_IF_FORMAT_OR_EDGE_CASES_WARRANT_THEM}
+{INCLUDE_3_TO_5_PAIRS_ONLY_IF_FORMAT_OR_EDGE_CASES_WARRANT_THEM}
 {REMOVE_THIS_TAG_IF_NOT_NEEDED}
 </examples>
+
+<scope_boundaries>
+{WHAT_IS_IN_SCOPE_AND_WHAT_TO_STOP_SHORT_OF}
+{REQUIRED_FOR_OPUS_5_AND_FABLE_5_TARGETS_SEE_references/models/}
+</scope_boundaries>
 
 <output_format>
 {EXPECTED_DELIVERABLE_SHAPE}
@@ -32,11 +41,15 @@ Wrap your final answer in <{WRAPPER_TAG}>...</{WRAPPER_TAG}> tags.
 {FORMAT_DETAILS_INSIDE_WRAPPER}
 </output_format>
 
+<tone_preference>
+{LENGTH_AND_STYLE_EXPECTATION}
+{REQUIRED_FOR_OPUS_5_TARGETS_WHERE_EFFORT_DOES_NOT_CONTROL_RESPONSE_LENGTH}
+</tone_preference>
+
 <reminders>
 - Only answer if you are confident; otherwise state your uncertainty explicitly.
-- Think through the problem step by step before producing the final output.
 - Deliver only the requested result; omit preamble and closing commentary.
-- Review your output for completeness and correctness before returning.
-- Prefer the simplest sufficient solution; do not add abstractions beyond what is asked.
-- Scope your changes strictly to the task; do not modify unrelated code or content.
+- Prefer the simplest sufficient solution; keep abstractions to what the task needs.
+- Keep changes within the stated scope.
+{TRIM_THIS_BLOCK_FOR_FABLE_5_TARGETS_A_LONG_ADHERENCE_LIST_DEGRADES_ITS_OUTPUT}
 </reminders>

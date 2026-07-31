@@ -1,6 +1,6 @@
 {
   "name": "prompt-architect",
-  "description": "Turns any rough request into a structured, domain-aware expert prompt with an 8-gate quality review",
+  "description": "Turns any rough request into a structured, domain-aware, model-aware expert prompt with an 11-gate quality review",
   "author": { "name": "sametbrr", "email": "sametbrr@gmail.com" },
   "repository": "https://github.com/sametbrr/prompt-architect",
   "license": "MIT",
