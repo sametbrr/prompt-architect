@@ -163,6 +163,17 @@ Final Output: Saved to ./onboarding-strategy-output.md
 
 ---
 
+## Configuration
+
+Optional environment variables, read by `detect_model.py`. When set, they override session detection.
+
+| Variable | Effect |
+|---|---|
+| `PROMPT_ARCHITECT_MODEL` | Target model, by ID or name (e.g. `claude-sonnet-5-5`, `gpt-6-astra`) |
+| `PROMPT_ARCHITECT_EFFORT` | Effort level reported with the target (e.g. `high`, `max`) |
+
+---
+
 ## How It Works
 
 | Stage | What happens |
@@ -227,21 +238,21 @@ prompt-architect/
 
 ## Limitations
 
-- **Profiles do not refresh themselves.** Each carries a `last_verified` date (2026-11-02) as provenance. Re-derive them when models change. In exchange, the runtime needs no network.
-- **Some IDs are inferred.** `claude-opus-5-5` is confirmed from a live session; the Sonnet 5.5, Haiku 5.5 and Fable/Mythos 5.1 IDs follow Anthropic's naming pattern. Profiles mark such facts as unverified.
-- **OpenAI guidance is thinner than Claude's.** Tier behaviour comes from the Codex model catalog and docs; there is no per-model prompting guide for GPT-6.1. Unverified points are labelled.
-- **Detection needs Claude Code or Codex.** Other agents get the explicit target or the generic profile.
-- **Gate checks are heuristic.** Regex and structure scans, not a substitute for reading the prompt.
+- **Profiles do not refresh themselves.** Each carries a `last_verified` date (2026-11-02) as provenance. Re-derive them when models change. In exchange, the runtime needs no network. **Workaround:** check a profile's `last_verified` date before relying on it, and pick up new releases with `claude plugin marketplace update skill-hub` or `codex plugin marketplace upgrade skill-hub`.
+- **Some IDs are inferred.** `claude-opus-5-5` is confirmed from a live session; the Sonnet 5.5, Haiku 5.5 and Fable/Mythos 5.1 IDs follow Anthropic's naming pattern. Profiles mark such facts as unverified. **Workaround:** if your model ID differs, pass it with `--target-model` or `PROMPT_ARCHITECT_MODEL`; any model ID is accepted.
+- **OpenAI guidance is thinner than Claude's.** Tier behaviour comes from the Codex model catalog and docs; there is no per-model prompting guide for GPT-6.1. Unverified points are labelled. **Workaround:** check the points the profiles under `references/models/openai/` label as unverified before relying on them.
+- **Detection needs Claude Code or Codex.** Other agents get the explicit target or the generic profile. **Workaround:** name the target model in your request, or set `PROMPT_ARCHITECT_MODEL`.
+- **Gate checks are heuristic.** Regex and structure scans, not a substitute for reading the prompt. **Workaround:** read the refined prompt before using it, starting with gates reported as WARN or FAIL.
 
 ---
 
 ## Troubleshooting
 
-**The skill doesn't trigger.** Check that the plugin is installed (`claude plugin list` or `codex plugin list`) and restart the session.
+**The skill doesn't trigger** — check that the plugin is installed (`claude plugin list` or `codex plugin list`) and restart the session.
 
-**`detect_model.py` returns `"host": "unknown"`.** You are outside Claude Code and Codex, or the session env vars aren't passed to the script. Name the target model, or set `PROMPT_ARCHITECT_MODEL`.
+**`detect_model.py` returns `"host": "unknown"`** — you are outside Claude Code and Codex, or the session env vars aren't passed to the script. Name the target model, or set `PROMPT_ARCHITECT_MODEL`.
 
-**A prompt that passed under v3 now fails.** Expected. v4 makes reasoning-echo a hard fail on every current Claude model, adds Gate 12 for Codex targets, and fails markdown sections on Claude targets. See the [CHANGELOG](CHANGELOG.md).
+**A prompt that passed under v3 now fails** — expected. v4 makes reasoning-echo a hard fail on every current Claude model, adds Gate 12 for Codex targets, and fails markdown sections on Claude targets. See the [CHANGELOG](CHANGELOG.md).
 
 ---
 
@@ -252,6 +263,7 @@ MIT — see [LICENSE](LICENSE).
 ---
 
 <div align="center">
-<a href="https://github.com/sametbrr/prompt-architect/issues">Report Bug</a> ·
-<a href="https://github.com/sametbrr/prompt-architect/issues">Request Feature</a>
+
+[Report Bug](https://github.com/sametbrr/prompt-architect/issues) · [Request Feature](https://github.com/sametbrr/prompt-architect/issues)
+
 </div>

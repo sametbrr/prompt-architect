@@ -22,8 +22,8 @@ claude plugin install prompt-architect@skill-hub
 Sonra Claude Code'da veya Codex'te doğal şekilde tetikle:
 
 ```
-> "Şunu uzman prompt'a çevir: B2B SaaS için onboarding stratejisi kur"
-> "Bu prompt'u GPT-6.1 Sol için yaz: /search'e rate limiting ekle"
+> "Turn this into an expert prompt: build an onboarding strategy for a B2B SaaS"
+> "Write this prompt for GPT-6.1 Sol: add rate limiting to /search"
 ```
 
 ---
@@ -109,7 +109,7 @@ python3 scripts/detect_model.py --self-test
 Skill hedefi şu sırayla çözer: senin söylediğin açık hedef, sonra tespit edilen oturum modeli, sonra host varsayılanı (Claude Code'da `opus-5-5`, Codex'te `gpt-sol`, diğer yerlerde `generic`).
 
 ```
-> "Bu prompt'u Haiku 5.5 için yaz: destek taleplerini sınıflandır"
+> "Write this prompt for Haiku 5.5: classify support tickets"
 > "GPT-6 Astra için ayarla"
 > "Codex için AGENTS.md kuralı yaz: testleri her zaman çalıştır"
 ```
@@ -147,19 +147,30 @@ Her kapı PASS, FAIL, WARN veya N/A raporlar. Skor `geçen / uygulanan` şeklind
 **Çıktı (kısaltılmış):**
 
 ```
-Hedef Model: Opus 5.5 (tespit · host: claude-code · effort: high) — profil: opus-5-5
-Tespit Edilen Alan: Ürün Büyüme Stratejisi
-Karmaşıklık: orta
-Seçilen Pattern'ler: Role, XML Structuring, Positive Guidance, Scope Boundaries,
-                     Verbosity Control, Output Framing
-Modele Özel Ayarlar: scope_boundaries eklendi; tone_preference eklendi;
-                     doğrulama satırı çıkarıldı (Opus 5.5)
-Rafine İngilizce Prompt:
+Target Model: Opus 5.5 (detected · host: claude-code · effort: high) — profile: opus-5-5
+Detected Domain: Product Growth Strategy
+Complexity: moderate
+Selected Patterns: Role, XML Structuring, Positive Guidance, Scope Boundaries,
+                   Verbosity Control, Output Framing
+Model-Specific Adjustments: scope_boundaries added; tone_preference added;
+                   verification line omitted (Opus 5.5)
+Refined English Prompt:
 <role>You are a senior product growth strategist...</role>
 ...
-Öz-Denetim: 9/9 uygulanan kapı geçti (0 uyarı, 3 N/A)
-Nihai Çıktı: ./onboarding-strategy-output.md dosyasına kaydedildi
+Self-Review: 9/9 applicable gates passed (0 warnings, 3 N/A)
+Final Output: Saved to ./onboarding-strategy-output.md
 ```
+
+---
+
+## Yapılandırma
+
+`detect_model.py` tarafından okunan opsiyonel ortam değişkenleri. Ayarlandıklarında oturum tespitini geçersiz kılarlar.
+
+| Değişken | Etki |
+|---|---|
+| `PROMPT_ARCHITECT_MODEL` | Hedef model, ID veya adıyla (örn. `claude-sonnet-5-5`, `gpt-6-astra`) |
+| `PROMPT_ARCHITECT_EFFORT` | Hedefle birlikte raporlanan effort seviyesi (örn. `high`, `max`) |
 
 ---
 
@@ -227,21 +238,21 @@ prompt-architect/
 
 ## Sınırlamalar
 
-- **Profiller kendini güncellemez.** Her biri köken bilgisi olarak bir `last_verified` tarihi (2026-11-02) taşır. Modeller değişince elle yeniden türet. Karşılığında çalışma anında ağ gerekmez.
-- **Bazı ID'ler çıkarımdır.** `claude-opus-5-5` canlı bir oturumdan doğrulandı; Sonnet 5.5, Haiku 5.5 ve Fable/Mythos 5.1 ID'leri Anthropic'in adlandırma kalıbını izler. Profiller bu tür bilgileri doğrulanmamış olarak işaretler.
-- **OpenAI rehberliği Claude'unkinden incedir.** Katman davranışı Codex model kataloğundan ve belgelerinden gelir; GPT-6.1 için modele özel bir prompting rehberi yok. Doğrulanmamış noktalar etiketlidir.
-- **Tespit için Claude Code veya Codex gerekir.** Diğer ajanlar açık hedefi veya generic profili kullanır.
-- **Kapı kontrolleri sezgiseldir.** Regex ve yapı taraması; prompt'u okumanın yerini tutmaz.
+- **Profiller kendini güncellemez.** Her biri köken bilgisi olarak bir `last_verified` tarihi (2026-11-02) taşır. Modeller değişince elle yeniden türet. Karşılığında çalışma anında ağ gerekmez. **Geçici çözüm:** bir profile güvenmeden önce `last_verified` tarihine bak ve yeni sürümleri `claude plugin marketplace update skill-hub` veya `codex plugin marketplace upgrade skill-hub` ile al.
+- **Bazı ID'ler çıkarımdır.** `claude-opus-5-5` canlı bir oturumdan doğrulandı; Sonnet 5.5, Haiku 5.5 ve Fable/Mythos 5.1 ID'leri Anthropic'in adlandırma kalıbını izler. Profiller bu tür bilgileri doğrulanmamış olarak işaretler. **Geçici çözüm:** model ID'n farklıysa `--target-model` veya `PROMPT_ARCHITECT_MODEL` ile ver; her model ID'si kabul edilir.
+- **OpenAI rehberliği Claude'unkinden incedir.** Katman davranışı Codex model kataloğundan ve belgelerinden gelir; GPT-6.1 için modele özel bir prompting rehberi yok. Doğrulanmamış noktalar etiketlidir. **Geçici çözüm:** `references/models/openai/` altındaki profillerin doğrulanmamış olarak etiketlediği noktaları kullanmadan önce kontrol et.
+- **Tespit için Claude Code veya Codex gerekir.** Diğer ajanlar açık hedefi veya generic profili kullanır. **Geçici çözüm:** hedef modeli isteğinde adıyla söyle ya da `PROMPT_ARCHITECT_MODEL` ayarla.
+- **Kapı kontrolleri sezgiseldir.** Regex ve yapı taraması; prompt'u okumanın yerini tutmaz. **Geçici çözüm:** rafine prompt'u kullanmadan önce oku; WARN veya FAIL alan kapılardan başla.
 
 ---
 
 ## Sorun Giderme
 
-**Skill tetiklenmiyor.** Eklentinin kurulu olduğunu kontrol et (`claude plugin list` veya `codex plugin list`) ve oturumu yeniden başlat.
+**Skill tetiklenmiyor** — eklentinin kurulu olduğunu kontrol et (`claude plugin list` veya `codex plugin list`) ve oturumu yeniden başlat.
 
-**`detect_model.py` `"host": "unknown"` döndürüyor.** Claude Code ve Codex dışındasın ya da oturum ortam değişkenleri script'e geçmiyor. Hedef modeli adıyla söyle veya `PROMPT_ARCHITECT_MODEL` ayarla.
+**`detect_model.py` `"host": "unknown"` döndürüyor** — Claude Code ve Codex dışındasın ya da oturum ortam değişkenleri script'e geçmiyor. Hedef modeli adıyla söyle veya `PROMPT_ARCHITECT_MODEL` ayarla.
 
-**v3'te geçen bir prompt şimdi kalıyor.** Beklenen durum. v4, akıl yürütmeyi yazdırma talimatını tüm güncel Claude modellerinde kesin hata yapar, Codex hedefleri için Kapı 12'yi ekler ve Claude hedeflerinde markdown bölümlerini hatalı sayar. Ayrıntılar [CHANGELOG](CHANGELOG.md)'da.
+**v3'te geçen bir prompt şimdi kalıyor** — beklenen durum. v4, akıl yürütmeyi yazdırma talimatını tüm güncel Claude modellerinde kesin hata yapar, Codex hedefleri için Kapı 12'yi ekler ve Claude hedeflerinde markdown bölümlerini hatalı sayar. Ayrıntılar [CHANGELOG](CHANGELOG.md)'da.
 
 ---
 
@@ -252,6 +263,7 @@ MIT — bkz. [LICENSE](LICENSE).
 ---
 
 <div align="center">
-<a href="https://github.com/sametbrr/prompt-architect/issues">Hata Bildir</a> ·
-<a href="https://github.com/sametbrr/prompt-architect/issues">Özellik İste</a>
+
+[Hata Bildir](https://github.com/sametbrr/prompt-architect/issues) · [Özellik İste](https://github.com/sametbrr/prompt-architect/issues)
+
 </div>
