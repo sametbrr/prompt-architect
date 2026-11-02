@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.1] - 2026-11-03
+
+### Changed
+- README: readme-standard pass (nav line, Usage cheat sheet, footer), Contributing section, TR mirror fixes.
+- LICENSE copyright holder: Samet Birer.
+- CI: Dependabot for GitHub Actions; actions/checkout v7.
+
 ## [4.0.0] - 2026-11-02
 
 Works as a plugin in both Claude Code and OpenAI Codex, detects the host and model it runs on, and tunes prompts for current Claude and OpenAI models. Major bump: the layout moved, profile names changed, the default profile changed, and the gate set changed.

@@ -1,10 +1,21 @@
 {
   "name": "prompt-architect",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Turns rough Turkish or English requests into structured, domain-aware expert prompts tuned per model for Claude (Opus, Sonnet, Haiku, Fable) and OpenAI Codex (GPT-6.x, GPT-5.6), with a quality-gate self-review",
-  "author": { "name": "sametbrr", "email": "sametbrr@gmail.com", "url": "https://github.com/sametbrr" },
+  "author": {
+    "name": "sametbrr",
+    "email": "sametbrr@gmail.com",
+    "url": "https://github.com/sametbrr"
+  },
   "homepage": "https://github.com/sametbrr/prompt-architect",
   "repository": "https://github.com/sametbrr/prompt-architect",
   "license": "MIT",
-  "keywords": ["prompting", "prompt-engineering", "model-aware", "agent-skills", "claude-code", "codex"]
+  "keywords": [
+    "prompting",
+    "prompt-engineering",
+    "model-aware",
+    "agent-skills",
+    "claude-code",
+    "codex"
+  ]
 }

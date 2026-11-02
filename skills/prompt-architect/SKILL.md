@@ -3,7 +3,7 @@ name: prompt-architect
 description: Turns a rough Turkish or English request into a structured, domain-aware expert prompt tuned to the model that will run it, and delivers the finished work when the request asks for a concrete deliverable. Detects the host (Claude Code or Codex) and active model, loads the matching Claude or OpenAI GPT profile, classifies the domain, drafts an English prompt and runs a quality-gate self-review. Use when the user wants to write, refine or upgrade a prompt, tune one for a specific model (Opus 5.5, Sonnet 5.5, Haiku 5.5, Fable 5.1, GPT-6.1 Sol, GPT-6 Astra, GPT-5.6 Terra, GPT-6 Luna), write instructions for a Claude or Codex agent, or get an expert strategy, plan or analysis, which it returns as finished work, not only a prompt. Triggers include prompt yaz, promptu iyileştir, expert prompta çevir, Opus 5.5 için prompt, Codex için prompt hazırla, strateji hazırla, domain analizi yap, refine my prompt, turn this into an expert prompt, write this for GPT-6.1 Sol.
 compatibility: Claude Code and OpenAI Codex plugin; works in any Agent Skills client. Model detection reads local session files (Claude Code transcript, Codex rollout or config.toml); other clients use an explicit target or the generic profile. Profiles cover Claude Opus, Sonnet and Haiku 5.5, Fable 5.1, legacy Claude 5 models, and OpenAI GPT-6.x and GPT-5.6 Codex models. Scripts need Python 3.10+ (standard library only).
 metadata:
-  version: "4.0.0"
+  version: "4.0.1"
   author: sametbrr@gmail.com
   created: "2026-05-21"
 ---
