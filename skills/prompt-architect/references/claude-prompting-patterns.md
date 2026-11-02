@@ -1,8 +1,10 @@
 # Claude Prompting Patterns
 
-Source: Anthropic's current prompting canon (`claude-prompting-best-practices`, `prompt-engineering/overview`, the per-model prompting guides), the "Prompting 101 | Code w/ Claude" video, and the interactive prompt-engineering tutorial. Last reconciled against the live docs **2026-07-31**.
+Source: Anthropic's current prompting canon (`claude-prompting-best-practices`, `prompt-engineering/overview`, the per-model prompting guides), the "Prompting 101 | Code w/ Claude" video, and the interactive prompt-engineering tutorial. Last reconciled **2026-11-02** (Claude 5.5 / 5.1 guides).
 
-Patterns 1–9 are the portable core: they are text-level, so they work identically in the API and in chat clients. Patterns 10–14 were added in v3.0.0 to cover behaviours the Claude 5 generation introduced. **Model-specific deltas live in [`models/`](models/) — read `models/_matrix.md` before selecting patterns.**
+Patterns 1–9 are the portable core: they are text-level, so they work identically in the API and in chat clients. Patterns 10–14 were added in v3.0.0 to cover behaviours the Claude 5 generation introduced. **Model-specific deltas live in [`models/`](models/); read `models/_matrix.md` before selecting patterns.**
+
+> **OpenAI / Codex targets.** Patterns 1–9 carry over as written except Pattern 2: use markdown sections (Goal, Context, Constraints, Done when, Output) instead of XML, per [`models/openai/_openai-canon.md`](models/openai/_openai-canon.md). Patterns 11 (scope) and 14 (checkpoints) apply; Pattern 12 maps to `model_verbosity` plus an explicit Output section; Pattern 13 maps to `ultra` effort and subagent prompts. Pattern 10 is useful but unverified for GPT models.
 
 > **v3.0.0 note.** The earlier "API-only, out of scope" framing was retired. Prefill was not merely unavailable in chat — it has been **removed** (a 400 on Claude 4.6+). `thinking` and `effort` are not API trivia either; they are surfaced in Claude Code and change how a prompt should be written. See [Harness-level controls](#harness-level-controls).
 
@@ -76,8 +78,8 @@ Patterns 1–9 are the portable core: they are text-level, so they work identica
 >
 > Until v2.2.1 this pattern ended with *"write your intermediate reasoning inside `<scratchpad>` tags."* **That instruction is now removed**, for two reasons:
 >
-> - On **Fable 5 / Mythos 5** it is a hazard. Instructions telling the model to echo, transcribe, or explain its internal reasoning as response text can trigger the `reasoning_extraction` refusal category and cause elevated fallback to Opus 4.8.
-> - On **Opus 5** thinking is on by default, so a scratchpad directive duplicates work the model already does and inflates output.
+> - On **every current Claude model** (Opus/Sonnet/Haiku 5.5, Fable/Mythos 5.1, and Fable 5) it is a hazard. Instructions telling the model to echo, transcribe, or explain its internal reasoning as response text can trigger the `reasoning_extraction` refusal.
+> - Adaptive thinking is on by default everywhere, so a scratchpad directive duplicates work the model already does and inflates output. On OpenAI models reasoning is internal too.
 >
 > Dictating the *order* of operations is still valuable — that is what this pattern now is. If an application needs reasoning visibility, read the structured `thinking` blocks from adaptive thinking rather than asking for them in prose.
 
@@ -186,7 +188,7 @@ These address behaviours the Claude 5 generation introduced. Whether each applie
 
 ## 10. Intent Framing
 
-**When to use:** Always worthwhile; **weighted heavily on Fable 5**, which connects a task to relevant information better when it understands the intent behind it.
+**When to use:** Always worthwhile; **weighted heavily on Fable 5.1 / Fable 5**, which connects a task to relevant information better when it understands the intent behind it.
 
 **How to apply:** A `<why>` block before `<task>`, naming the larger goal, the audience, and what the output enables.
 
@@ -200,7 +202,7 @@ Also applies at the constraint level: *"Your response will be read aloud by a te
 
 ## 11. Scope Boundaries
 
-**When to use:** Any execute-mode prompt. **Required for Opus 5** (which can widen a task on its own) **and Fable 5** (which can take unrequested actions).
+**When to use:** Any prompt that the target will run (both modes). **Required for Opus 5.5** (acts quickly across apps), **Sonnet 5.5** (over-does at `xhigh`/`max`), **Fable 5.1** (can take unrequested actions) and **every OpenAI target** (acts by default). Legacy: Opus 5, Fable 5.
 
 **How to apply:** A `<scope_boundaries>` block stating what to deliver and what to stop short of.
 
@@ -210,13 +212,13 @@ check in only when different readings of the request would lead to materially di
 work. Finish the whole task, and stop short of actions clearly beyond what was asked.
 ```
 
-For assessment-type requests, Fable 5's sharper form: *"When the user is describing a problem or thinking out loud rather than requesting a change, the deliverable is your assessment. Report your findings and stop."*
+For assessment-type requests, the Fable form: *"When the user is describing a problem or thinking out loud rather than requesting a change, the deliverable is your assessment. Report your findings and stop."* Sonnet 5.5's form for ideas and plans: *"When the user asks for ideas, options or a plan, give them that and stop. Don't start building or changing anything until they say to go ahead."*
 
 **Note on framing:** this pattern legitimately uses negative constraints. Anthropic's own scope-containment block is almost entirely negative. Gate 3 exempts constraint lists for exactly this reason.
 
 ## 12. Verbosity Control
 
-**When to use:** **Mandatory on Opus 5** — its default responses run long and `effort` does not reliably shorten visible output. Optional elsewhere, where length already tracks task complexity.
+**When to use:** **Mandatory on legacy Opus 5**, where `effort` does not reliably shorten the visible answer. Optional on Opus 5.5 (its guide says it uses fewer output tokens than Opus 5) and elsewhere. On Fable 5.1, target density instead ("Please remove all mannered prose.").
 
 **How to apply:** A `<tone_preference>` block, plus a short restatement near the end of a long prompt.
 
@@ -226,11 +228,11 @@ most of the response on the main answer. When asked to explain something, give a
 summary unless an in-depth explanation is specifically requested.
 ```
 
-**On Sonnet 5 and Opus 4.8, show rather than forbid** — a positive example of the right concision beats an instruction naming the verbosity to avoid.
+**On Sonnet and legacy Opus 4.8, show rather than forbid** — a positive example of the right concision beats an instruction naming the verbosity to avoid.
 
 ## 13. Delegation Policy
 
-**When to use:** Any prompt whose harness supports subagents, targeting **Opus 5** (delegates readily), **Opus 4.8**, or **Fable 5** (parallel subagents). Sonnet 5's guide has no subagent section — skip it there.
+**When to use:** Any prompt whose harness supports subagents. **Opus 5.5** delegates readily (cap it); **Sonnet 5.5** at `xhigh`/`max` launches unrequested reviewer subagents (forbid them unless a review was asked for); **Fable 5.1**'s lead agent can idle while subagents run (tell it to keep working). On Codex, `ultra` effort delegates automatically, so say how the work splits.
 
 ```
 Delegate to a subagent only for large tasks that are genuinely independent and
@@ -238,11 +240,11 @@ parallelizable. Do not delegate work you can finish yourself in a handful of too
 and do not use subagents to verify or double-check your own work. Keep spawn counts low.
 ```
 
-**⚠️ Model-divergent.** On **Opus 5**, also *remove* any verification instruction — it self-verifies, and asking causes over-verification. On **Fable 5**, do the opposite: add interval self-verification with fresh-context verifier subagents. These two are direct opposites; the profile decides.
+**⚠️ Model-divergent.** On **Opus 5 / 5.5**, *remove* verification instructions (it self-verifies). On **Sonnet 5.5, Haiku 5.5** and **OpenAI** targets, *add* a real check (tests, type-checker, build). On **Fable 5.1**, add interval self-verification with fresh-context verifier subagents. The profile decides.
 
 ## 14. Checkpoint Policy
 
-**When to use:** Long-running or agentic prompts. Strongest signal on Fable 5, where a brief instruction replaces an enumerated list of stop conditions.
+**When to use:** Long-running or agentic prompts. Strongest signal on Fable 5.1, where a brief instruction replaces an enumerated list of stop conditions.
 
 ```
 Pause for the user only when the work genuinely requires them: a destructive or irreversible
@@ -259,7 +261,10 @@ Not prompt text, but they change how the prompt should be written. Formerly (and
 | Control | Why it matters here |
 |---|---|
 | **`effort`** | The primary intelligence/latency/cost lever, surfaced in Claude Code. Higher effort means more unrequested thoroughness — pair it with Pattern 11. Defaults differ per model; see the profile |
-| **`thinking`** | On by default on Opus 5; disable only at effort `high` or below. Prefer thinking-on at `low` effort over thinking-off. Never instruct the model *not* to think — that increases tag leakage |
+| **`thinking`** | Adaptive and on by default. Can't be disabled on Opus 5.5 or Fable 5.1 (400); Haiku 5.5 only at `high` or below. Prefer `low` effort over thinking-off. Never instruct the model *not* to think; that increases tag leakage |
+| **Sampling params** | Non-default `temperature` / `top_p` / `top_k` return a 400 on current Claude models. Steer with instructions and examples |
+| **`tool_choice`** | Forced tool use works with adaptive thinking; use it when a call is mandatory |
+| **OpenAI: `model_reasoning_effort`, `model_verbosity`** | Codex equivalents of effort and length control. See the OpenAI canon |
 | **`budget_tokens`** | **Removed.** Deprecated on 4.6, returns a 400 on Claude 4.7+. Lower `effort` or cap `max_tokens` instead |
 | **Structured Outputs** | The schema-constrained replacement for prefill-based formatting. Prefer it over prose format instructions when the schema is strict |
 | **Prefill** | **Unsupported from Claude 4.6 onward** (400). See Pattern 7 for migrations |

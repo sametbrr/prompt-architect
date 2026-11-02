@@ -7,6 +7,8 @@ source: platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompti
 
 # Profile — Claude Sonnet 5
 
+> **Legacy profile.** Superseded by [Sonnet 5.5](../sonnet-5-5.md). Use only when the target is explicitly `claude-sonnet-5`.
+
 Behaviourally the closest sibling to Opus 4.8. The one structural difference: **the source guide has no subagent-spawning section**, so this profile adds no delegation cap.
 
 ---

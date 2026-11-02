@@ -1,16 +1,22 @@
 # Prompt Quality Gates (Self-Review Checklist)
 
-Eleven checks. Run after drafting a refined prompt. Any failing gate triggers a single revision pass.
+Twelve checks. Run them after drafting a refined prompt. A failing gate triggers one revision pass.
 
-**Gates 7, 9, 10 and 11 are model-conditional** — they behave differently depending on the resolved target model. Read [`models/_matrix.md`](models/_matrix.md) first; each profile's *Gate implications* table states which apply. `validate_prompt.py --target-model <profile>` applies the same logic mechanically.
+Every gate ends as **PASS**, **FAIL**, **WARN** (passed with a warning) or **N/A** (doesn't apply to this prompt or target). N/A gates are reported but **never counted as passes**. The score is `passed / applicable`, so the denominator changes with the target and the prompt shape.
 
-| Gate | Scope |
-|---|---|
-| 1–6, 8 | Universal |
-| 7 — reasoning directive | **Inverted** on Opus 5 and Fable 5 |
-| 9 — over-verification | Opus 5 only |
-| 10 — reasoning echo | Hard fail on Fable 5, warning elsewhere |
-| 11 — scope boundary | Required on Opus 5 and Fable 5 in execute mode |
+Gates 2 and 9–12 depend on the target profile. Read [`models/_matrix.md`](models/_matrix.md) first; each profile's *Gate implications* table says which apply. `scripts/validate_prompt.py --target-model <profile or model id>` applies the same logic mechanically.
+
+| Gate | Claude current (Opus/Sonnet/Haiku 5.5, Fable 5.1) | Claude legacy | OpenAI (Sol/Astra/Terra/Luna) | Generic |
+|---|---|---|---|---|
+| 1, 3, 4, 8 | Always | Always | Always (8: wrapper tag optional) | Always |
+| 2 XML isolation | Applies (markdown sections fail) | Applies | N/A | N/A |
+| 5, 6, 7 | Structured prompts only | same | same | same |
+| 9 No over-verification | Opus 5.5: **warn**; others N/A | Opus 5: **fail** | N/A | N/A |
+| 10 No reasoning echo | **Hard fail** | Fable 5 hard fail; others warn | Warn | Warn |
+| 11 Scope boundary | Opus 5.5, Sonnet 5.5, Fable 5.1: **required**; Haiku 5.5: N/A | Opus 5, Fable 5: required | **Required** | N/A |
+| 12 Completion criteria | N/A | N/A | **Required** | N/A |
+
+"Structured" means XML mode (3+ distinct tags) or markdown mode (3+ headings). Compact bullet prompts get N/A on gates 5–7, and on Gate 2.
 
 ---
 
@@ -36,13 +42,15 @@ Eleven checks. Run after drafting a refined prompt. Any failing gate triggers a 
 **Failure example:** Prompt uses `**Rules:**` followed by bullet points.
 **Fix:** Wrap as `<rules>\n- ...\n</rules>`.
 
+**Target-dependent.** Applies to Claude targets, where markdown headings used as section delimiters fail. N/A on OpenAI and generic targets: Codex guidance accepts plain markdown sections, so use [`assets/templates/refined-prompt-markdown.tmpl`](../assets/templates/refined-prompt-markdown.tmpl) there.
+
 ---
 
 ## Gate 3 — Positive Guidance Ratio
 
 **Pass criteria:**
 - ≥60% of *behavioural directives* are stated positively ("do X") rather than negatively ("don't do Y").
-- **Constraint blocks are exempt** — `<scope_boundaries>` and anti-overengineering lists are counted separately and may be entirely negative.
+- **Constraint blocks are exempt**: `<scope_boundaries>`, a markdown `## Constraints` / `## Scope` section, and anti-overengineering lists may be entirely negative.
 - Where a negative appears outside a constraint block, it should be paired with a positive alternative.
 
 **Why the threshold moved (v3.0.0):** the old ≥75% rule over all text would fail Anthropic's own recommended prompts. Its canonical scope-containment block reads *"Don't add features, refactor code… Don't add docstrings… Don't add error handling… Don't create helpers…"* — almost entirely negative, and correct that way. Enumerating what to stop short of is precisely what a boundary block is for. Positive framing still matters for *behaviour* ("return only the JSON object" over "don't add explanations"); it does not for *limits*.
@@ -96,7 +104,7 @@ Eleven checks. Run after drafting a refined prompt. Any failing gate triggers a 
 **Failure example:** Multi-step analysis with no order dictated.
 **Fix:** Add numbered steps, and state why the order matters when it isn't obvious.
 
-> **Inverted in v3.0.0.** This gate previously *required* a `<scratchpad>`/`<thinking>` directive for non-trivial reasoning. It now requires the opposite: on Opus 5 and Fable 5 targets, the presence of a reasoning-echo directive is a **failure** (see Gate 10). Ordering the steps is still valuable; asking the model to narrate its thinking is not.
+> **Inverted in v3.0.0.** This gate previously *required* a `<scratchpad>`/`<thinking>` directive for non-trivial reasoning. It now requires the opposite: a reasoning-echo directive is a **failure** on every current Claude target (see Gate 10). Ordering the steps is still valuable; asking the model to narrate its thinking is not.
 
 ---
 
@@ -111,14 +119,14 @@ Eleven checks. Run after drafting a refined prompt. Any failing gate triggers a 
 
 ---
 
-## Gate 9 — No Over-Verification *(Opus 5 targets only)*
+## Gate 9 — No Over-Verification *(Opus targets)*
 
 **Pass criteria:** The prompt does **not** instruct the model to verify, double-check, or re-review its own work.
 
 **Why:** Opus 5 verifies its own work unprompted. Explicit verification instructions — *"include a final verification step for any non-trivial task"*, *"use a subagent to verify"* — cause over-verification. Removing them cuts wasted tokens with no loss in quality. This also applies to legacy harness scaffolding that bolts on a separate verify stage.
 
 **Failure example:** `<reminders>` contains *"Review your output for completeness and correctness before returning."*
-**Fix:** Delete it. On other target models the same line is harmless; on **Fable 5 it is actively wanted** — there, add interval self-verification with fresh-context verifier subagents instead.
+**Fix:** Delete it. Severity: **fail** on legacy Opus 5; **warning** on Opus 5.5 (the 5.5 guide says Opus 5 prompts are a starting point but doesn't restate this, so it is carried over, unverified). On Sonnet 5.5, Haiku 5.5, Fable 5.1 and every OpenAI target, verification is **wanted**: name a real check (tests, type-checker, build) or, on Fable, interval checks with fresh-context verifier subagents.
 
 ---
 
@@ -126,23 +134,36 @@ Eleven checks. Run after drafting a refined prompt. Any failing gate triggers a 
 
 **Pass criteria:** The prompt does **not** instruct the model to write, transcribe, echo, or explain its internal reasoning as response text. No `<scratchpad>`, `<thinking>`, or "show your reasoning" directives.
 
-**Severity:** hard fail on **Fable 5 / Mythos 5**; warning on all other targets.
+**Severity:** **hard fail on every current Claude profile** (Opus 5.5, Sonnet 5.5, Haiku 5.5, Fable/Mythos 5.1) and on legacy Fable 5; warning on legacy Opus 5 / Sonnet 5 / Opus 4.8, OpenAI and generic targets.
 
-**Why:** on Fable 5 this can trigger the `reasoning_extraction` refusal category, causing elevated fallback to Opus 4.8 — a silent quality and cost regression. On Opus 5, thinking is on by default, so the directive duplicates work and inflates output.
+**Why:** on current Claude models, asking for the chain of thought in visible text is deprecated and can stop the request with `stop_reason: "refusal"`, category `reasoning_extraction`. On OpenAI models reasoning stays internal, so the directive only adds length (whether it triggers refusals there is unverified).
 
 **Failure example:** *"Write intermediate reasoning inside `<scratchpad>`…`</scratchpad>` before producing the final answer."*
 **Fix:** Delete the directive; keep the numbered ordering (Gate 7). If reasoning visibility is genuinely required, read structured `thinking` blocks from adaptive thinking instead of asking for prose.
 
 ---
 
-## Gate 11 — Scope Boundary Present *(Opus 5 and Fable 5, execute mode)*
+## Gate 11 — Scope Boundary Present *(see table; both modes)*
 
-**Pass criteria:** The prompt contains an explicit statement of what to deliver and what to stop short of — a `<scope_boundaries>` block in XML mode, or a `Scope:` line in compact mode.
+**Pass criteria:** The prompt states what to deliver and what to stop short of: a `<scope_boundaries>` block in XML mode, a `Scope:` or `Boundaries:` line in compact mode, or a `## Constraints` / `## Scope` section in markdown mode.
 
-**Why:** Opus 5 can widen a task on its own initiative, adding steps that weren't requested. Fable 5 can take unrequested actions outright — drafting an email nobody asked for, creating defensive git-branch backups.
+**Why:** Opus 5.5 starts acting quickly across connected apps. Sonnet 5.5 at `xhigh`/`max` launches unrequested reviewer subagents and cleanup refactors. Fable 5.1 can take unrequested actions and rewrite whole files. Codex models act by default, and the Codex docs name boundaries as one of the four parts of a good prompt.
 
-**Failure example:** An execute-mode prompt targeting Opus 5 with no scope statement anywhere.
+**Failure example:** A prompt targeting Opus 5.5 or a Codex model with no scope statement anywhere.
+
+**Both modes.** Gates 11 and 12 apply in `prompt_only` too: the refined prompt is the deliverable and will be run by the target, so it needs its boundary and finish line whether or not the skill executes it.
 **Fix:** Add the boundary block from Pattern 11. Negative framing is fine here and is exempt from Gate 3.
+
+---
+
+## Gate 12 — Completion Criteria *(OpenAI / Codex targets)*
+
+**Pass criteria:** The prompt says what finished looks like: a `## Done when` section, or an equivalent "success criteria" / "acceptance criteria" / "done when" line. When code changes, it should also name the check command (`pytest -q`, `npm test --silent`); the validator prints a tip if none is found.
+
+**Why:** the Codex docs recommend stating "done looks like" so the agent finishes without wandering out of scope, and asking it to verify with a real command. Codex models default to acting and persisting, so an explicit finish line matters more than on Claude.
+
+**Failure example:** "Add rate limiting to /search." with no completion condition.
+**Fix:** Add `## Done when` with an observable criterion and `Run \`<check>\` and report the result.` On gpt-6-luna, ask for tests explicitly; its harness skips them otherwise.
 
 ---
 
@@ -174,7 +195,7 @@ Analyze this accident report and tell me who is at fault.
 
 **Result:** Better accuracy but still occasional misclassification.
 
-### Best prompt (passes all applicable gates, Opus 5 target)
+### Best prompt (passes all applicable gates on an Opus 5.5 target)
 ```
 <role>You are a senior claims adjuster specializing in Swedish auto-accident forms. Communicate in precise, formal tone.</role>
 <why>This verdict feeds a settlement decision, so a wrong at-fault call is expensive to reverse.</why>
@@ -204,11 +225,11 @@ Analyze this accident report and tell me who is at fault.
 ## Quick Self-Review Loop
 
 After drafting:
-1. Resolve the target model first — the applicable gate set depends on it.
+1. Resolve the target model first; the applicable gate set depends on it.
 2. Walk the applicable gates in order.
 3. Note any FAIL.
 4. Apply the fix from this document.
 5. Re-check only the previously-failing gates.
-6. Output `Self-Review: N/N gates passed` (N = applicable count, not always 11) or `Self-Review: failed [gate-list]`.
+6. Output `Self-Review: P/A applicable gates passed (W warnings, K N/A)`, or list the failed gates. Never count N/A gates as passed.
 
 If after one revision pass any gate still fails, surface the failure in the `Self-Review:` line rather than hiding it — honesty over false-pass.

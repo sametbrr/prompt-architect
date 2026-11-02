@@ -6,7 +6,7 @@
 
 # Prompt Architect
 
-Her türlü ham fikri; alan sınıflandırmalı, modele duyarlı ve kalite denetiminden geçmiş uzman prompt'a dönüştüren bir Agent Skill. Türkçe ve İngilizce girdi kabul eder.
+Claude Code ve OpenAI Codex için bir Agent Skill ve eklenti. Ham bir fikri alan sınıflandırmalı, modele duyarlı ve kalite denetiminden geçmiş uzman prompt'a dönüştürür. Hangi host ve modelde çalıştığını tespit eder, prompt'u Claude veya OpenAI modellerine göre ayarlar. Türkçe ve İngilizce girdi kabul eder.
 
 > 🇬🇧 For English see [README.md](README.md)
 
@@ -15,13 +15,15 @@ Her türlü ham fikri; alan sınıflandırmalı, modele duyarlı ve kalite denet
 ## Hızlı Başlangıç
 
 ```bash
-git clone https://github.com/sametbrr/prompt-architect.git ~/.claude/skills/prompt-architect
+claude plugin marketplace add sametbrr/skill-hub
+claude plugin install prompt-architect@skill-hub
 ```
 
-Claude Code oturumunu yeniden başlat, sonra doğal şekilde tetikle:
+Sonra Claude Code'da veya Codex'te doğal şekilde tetikle:
 
 ```
 > "Şunu uzman prompt'a çevir: B2B SaaS için onboarding stratejisi kur"
+> "Bu prompt'u GPT-6.1 Sol için yaz: /search'e rate limiting ekle"
 ```
 
 ---
@@ -30,158 +32,166 @@ Claude Code oturumunu yeniden başlat, sonra doğal şekilde tetikle:
 
 | Özellik | Ne yapar |
 |---|---|
-| Hedef model çözümleme | Aktif Claude modelini ve effort seviyesini oturumdan okur ya da açık hedefi alır. Bulamazsa `opus-5`'e düşer |
-| Modele özel ayarlama | Prompt bloklarını modele göre ekler, çıkarır veya kısaltır — Opus 5 conciseness bloğu alır ve doğrulama talimatı almaz, Fable 5 daha hafif bir iskelet alır |
+| Host + model tespiti | Claude Code'u veya Codex'i tanır, aktif modeli ve effort seviyesini yerel oturum dosyasından okur. Açık hedef her zaman kazanır |
+| Claude profilleri | Opus 5.5 (varsayılan), Sonnet 5.5, Haiku 5.5, Fable 5.1 / Mythos 5.1; ayrıca eski Opus 5, Sonnet 5, Opus 4.8 ve Fable 5 |
+| OpenAI profilleri | Canlı model kataloğundan Codex katmanları: Sol (gpt-6.1-sol, gpt-6-sol, gpt-5.6-sol), Astra (gpt-6-astra), Terra (gpt-6.1-terra, gpt-5.6-terra), Luna (gpt-6-luna, gpt-5.6-luna) |
+| Modele özel ayarlama | Opus 5.5 kapsam bloğu alır, doğrulama satırı almaz; Sonnet/Haiku 5.5 tamamlama ve gerçek kontrol satırları alır; Fable 5.1 hafif iskelet alır; Codex modelleri kısıtlar, done-when ve kontrol komutu içeren markdown bölümleri alır |
 | Alan sınıflandırma | Girdiyi 25 alanlık taksonomiye karşı Türkçe ve İngilizce sinyal kelimelerle eşler |
 | Pattern seçimi | 14 prompting pattern'inden göreve yeten en küçük alt kümeyi seçer |
-| İki iskelet | Basit görevler için kompakt madde gövdesi, karmaşık görevler için tam XML gövdesi |
-| 11 kapılı öz-denetim | Yedi evrensel kapı, artı hedef modele göre davranışı değişen dört kapı |
-| İki dilli girdi | Türkçe veya İngilizce girer; taşınabilirlik için prompt gövdesi her zaman İngilizce çıkar |
-| İsteğe bağlı yürütme | Çıktıyı üretir ve yapılandırılmış sonucu dosyaya yazar — yalnızca istendiğinde |
-
-Prompt gövdesi her zaman İngilizce yazılır. Bölüm etiketleri kullanıcının girdi diline uyar.
+| Üç iskelet | Basit görevler için kompakt madde, karmaşık Claude prompt'ları için XML, Codex için markdown bölümleri |
+| 12 kapılı öz-denetim | Uygulanmayan kapılar N/A olarak raporlanır, asla geçti sayılmaz |
+| İki dilli girdi | Türkçe veya İngilizce girer; prompt gövdesi her zaman İngilizce çıkar |
+| İsteğe bağlı yürütme | Çıktıyı üretir ve yapılandırılmış sonucu dosyaya yazar, yalnızca istendiğinde |
 
 ---
 
 ## Gereksinimler
 
-- Python 3.10+ — iki script için. Yalnızca standart kütüphane, `pip install` gerekmez
-- Claude Code veya [agentskills.io](https://agentskills.io) uyumlu herhangi bir ajan
+- Python 3.10+, iki script için. Yalnızca standart kütüphane, `pip install` gerekmez
+- Claude Code, Codex veya [agentskills.io](https://agentskills.io) uyumlu herhangi bir ajan
 
-Model tespiti Claude Code oturum transcript'ini okur. Diğer ajanlar skill'i yine çalıştırır; varsayılan model profiline düşerler.
+Model tespiti Claude Code oturum transcript'ini veya Codex rollout dosyasını okur. Diğer ajanlar skill'i yine çalıştırır; açık hedefi veya generic profili kullanırlar.
 
 ---
 
 ## Kurulum
 
 ```bash
-git clone https://github.com/sametbrr/prompt-architect.git ~/.claude/skills/prompt-architect
+# Claude Code
+claude plugin marketplace add sametbrr/skill-hub
+claude plugin install prompt-architect@skill-hub
+# Codex
+codex plugin marketplace add sametbrr/skill-hub
+codex plugin add prompt-architect@skill-hub
+# Manuel (herhangi bir Agent Skills istemcisi): skills/prompt-architect klasörünü ~/.claude/skills/ veya ~/.agents/skills/ altına kopyala
 ```
 
-Claude Code, `~/.claude/skills/` altındaki skill'leri otomatik keşfeder. Klonladıktan sonra oturumu yeniden başlat.
-
-Projeye özel kurulum için deponun içindeki `.claude/skills/` dizinine klonla.
+Kurduktan sonra oturumu yeniden başlat; skill'ler açılışta keşfedilir.
 
 ### Kaldırma
 
 ```bash
-rm -rf ~/.claude/skills/prompt-architect
+claude plugin uninstall prompt-architect@skill-hub   # Claude Code
+codex plugin remove prompt-architect@skill-hub       # Codex
 ```
 
-Skill kendi dizini dışına hiçbir şey yazmaz — hook yok, config dosyası yok, PATH değişikliği yok. Dizini silmek tam kaldırma demektir.
+Manuel kurulumda kopyaladığın `prompt-architect` klasörünü sil. Skill, senin istediğin dosyalar dışında hiçbir şey yazmaz: hook yok, config yok, cache yok.
 
 ---
 
 ## Kullanım
 
+Script'leri `skills/prompt-architect/` içinden çalıştır:
+
 ```bash
 # Taslak prompt'u kalite kapılarına karşı doğrula
-python3 scripts/validate_prompt.py --stdin --target-model opus-5 < draft-prompt.txt
+python3 scripts/validate_prompt.py --stdin --target-model opus-5-5 < draft-prompt.txt
+python3 scripts/validate_prompt.py draft.md --target-model gpt-6.1-sol
 
-# Mevcut oturumdan aktif modeli ve effort'u çöz
+# Aktif host, model ve effort'u ya da açık bir hedefi çözümle
 python3 scripts/detect_model.py
+python3 scripts/detect_model.py --model "Sonnet 5.5"
 
-# Her iki script için yerleşik testleri çalıştır
+# Yerleşik testler
 python3 scripts/validate_prompt.py --self-test
 python3 scripts/detect_model.py --self-test
 ```
 
 ### Modlar
 
-| İstediğin… | Şuna benzer bir şey söyle… | Mod |
+| İstediğin… | Şöyle bir şey söyle… | Mod |
 |---|---|---|
-| Sadece düzenlenmiş prompt | `sadece prompt`, `prompt yaz yeter`, `çalıştırma` | `prompt_only` (varsayılan) |
-| Prompt + gerçek çıktı | `çalıştır`, `execute et`, `sonucu da üret` | `prompt_and_execute` |
+| Sadece rafine prompt | `sadece prompt`, `prompt yaz yeter`, `execute etme` | `prompt_only` (varsayılan) |
+| Prompt + asıl çıktı | `çalıştır`, `uygula`, `sonucu da üret` ya da çıktıya yönelik bir emir: `strateji hazırla`, `domain analizi yap` | `prompt_and_execute` |
 
 ### Belirli bir modeli hedefleme
 
-Skill hedefi şu sırayla çözer: senin belirttiğin açık hedef, sonra oturum modeli, sonra `opus-5`.
+Skill hedefi şu sırayla çözer: senin söylediğin açık hedef, sonra tespit edilen oturum modeli, sonra host varsayılanı (Claude Code'da `opus-5-5`, Codex'te `gpt-sol`, diğer yerlerde `generic`).
 
 ```
-> "Bu prompt'u Opus 4.8 için yaz: çeyreklik finansalları özetle"
-> "Fable 5'e göre ayarla"
+> "Bu prompt'u Haiku 5.5 için yaz: destek taleplerini sınıflandır"
+> "GPT-6 Astra için ayarla"
+> "Codex için AGENTS.md kuralı yaz: testleri her zaman çalıştır"
 ```
 
-Tanınmayan bir model, jenerik tavsiyeye değil `opus-5` profiline düşer — güncel bir amiral gemi profili, bilinmeyen yeni bir modele hiç profil olmamasından daha iyi uyar.
+Bilinmeyen yeni Claude modelleri Opus 5.5 profilini, bilinmeyen GPT modelleri Sol profilini bir notla kullanır. Diğer sağlayıcılar (Gemini, Llama…) ayarlanmamış generic formu alır.
 
-### `validate_prompt.py`
+### `detect_model.py`
 
-Prompt'u kalite kapılarına karşı puanlar, başarısızlıkta sıfırdan farklı çıkış kodu döner.
+Tek bir JSON nesnesi yazdırır. Yalnızca yerel dosya okur, ağ yok.
 
 ```bash
-python3 scripts/validate_prompt.py draft.txt --target-model fable-5
+$ python3 scripts/detect_model.py
+{"host": "claude-code", "model": "claude-opus-5-5", "effort": "high", "source": "session",
+ "family": "claude", "profile": "opus-5-5",
+ "profile_files": ["references/models/_matrix.md", "references/models/_shared-canon.md", "references/models/opus-5-5.md"], ...}
 ```
+
+Tespit sırası: `PROMPT_ARCHITECT_MODEL` / `PROMPT_ARCHITECT_EFFORT` override → Codex (`CODEX_THREAD_ID`, rollout dosyasındaki son `turn_context`, sonra `config.toml`) → Claude Code (`CLAUDE_CONFIG_DIR` veya `~/.claude` altındaki `CLAUDE_CODE_SESSION_ID` transcript'i, effort `CLAUDE_EFFORT`'tan) → bilinmeyen host. İki host'un değişkenleri birlikte varsa, oturum dosyası en son yazılan host kazanır. Oturum dosyaları sondan okunur, bozuk satırlar atlanır.
+
+### `validate_prompt.py`
 
 | Bayrak | Amaç |
 |---|---|
 | `--stdin` | Prompt'u standart girdiden oku |
-| `--target-model` | `opus-5` (varsayılan), `opus-4-8`, `sonnet-5`, `fable-5` değerlerinden biri |
-| `--self-test` | Yerleşik vakaları çalıştırır; tersine çevrilen kapıların gerçekten tetiklendiğini de kanıtlar |
+| `--target-model` | Bir profil (`opus-5-5`, `sonnet-5-5`, `haiku-5-5`, `fable-5-1`, `gpt-sol`, `gpt-astra`, `gpt-terra`, `gpt-luna`, `generic`, eski profil adları) ya da `gpt-5.6-terra` gibi herhangi bir model ID'si. Varsayılan `opus-5-5` |
+| `--self-test` | Yerleşik test vakalarını çalıştır |
 
-1–6 ve 8. kapılar her zaman geçerlidir. 7, 9, 10 ve 11. kapılar hedefe göre davranış değiştirir; bu yüzden skor `N/N` biçimindedir ve `N` geçerli kapı sayısıdır.
-
-### `detect_model.py`
-
-Aktif modeli JSON olarak yazdırır. Yalnızca yerel dosya okuma — ağ yok, cache dosyası yok, hook yok.
-
-```bash
-$ python3 scripts/detect_model.py
-{"id": "claude-opus-5", "effort": "xhigh", "profile": "opus-5", "source": "session", "transcript": "..."}
-```
-
-Okunabilir bir transcript yoksa `{"source": "default", "profile": "opus-5"}` döner ve 0 ile çıkar — modelin tespit edilememesi hata değil, normal bir sonuçtur.
+Her kapı PASS, FAIL, WARN veya N/A raporlar. Skor `geçen / uygulanan` şeklindedir; N/A kapılar listelenir ama sayılmaz. Herhangi bir kapı kalırsa çıkış kodu 1'dir.
 
 ### Örnek
 
 **Girdi:**
-> B2B SaaS için onboarding stratejisi kur, çalıştır da
+> B2B SaaS için onboarding stratejisi kur, ve çalıştır
 
 **Çıktı (kısaltılmış):**
 
 ```
-Target Model: Opus 5 (detected from session · effort: xhigh) — profile: opus-5
-Detected Domain: Product Growth Strategy
-Complexity: moderate
-Selected Patterns: Role, XML Structuring, Positive Guidance, Scope Boundaries,
-                   Verbosity Control, Output Framing
-Model-Specific Adjustments: conciseness block added; scope_boundaries added;
-                   verification instruction deliberately omitted (Opus 5 over-verifies)
-
-Refined English Prompt:
+Hedef Model: Opus 5.5 (tespit · host: claude-code · effort: high) — profil: opus-5-5
+Tespit Edilen Alan: Ürün Büyüme Stratejisi
+Karmaşıklık: orta
+Seçilen Pattern'ler: Role, XML Structuring, Positive Guidance, Scope Boundaries,
+                     Verbosity Control, Output Framing
+Modele Özel Ayarlar: scope_boundaries eklendi; tone_preference eklendi;
+                     doğrulama satırı çıkarıldı (Opus 5.5)
+Rafine İngilizce Prompt:
 <role>You are a senior product growth strategist...</role>
-<task>Design a B2B SaaS onboarding strategy...</task>
 ...
-
-Self-Review: 11/11 gates passed
-Final Output: Saved to ./onboarding-strategy-output.md
+Öz-Denetim: 9/9 uygulanan kapı geçti (0 uyarı, 3 N/A)
+Nihai Çıktı: ./onboarding-strategy-output.md dosyasına kaydedildi
 ```
 
 ---
 
 ## Nasıl Çalışır
 
-Yedi aşama sırayla işler. Aşama 0 kendinden sonraki her şeyi belirler; çünkü hangi pattern'lerin geçerli olacağına ve hangi kalite kapılarının tetikleneceğine hedef model karar verir.
-
 | Aşama | Ne olur |
 |---|---|
-| 0 — Hedef Modeli Çöz | Açık hedef → oturum tespiti → `opus-5`. Yönlendirme matrisini, ortak canon'u ve tek bir model profilini yükler |
-| 1 — Analiz | Amaç, kısıtlar ve karmaşıklık skoru (basit / orta / karmaşık) |
-| 2 — Alan Sınıflandırma | 25 alanlık taksonomiden tek baskın alan, çıktıyı biçimlendiriyorsa bir de destekleyici alan |
-| 3 — Pattern Seçimi | 14 pattern'in göreve yeten en küçük alt kümesi; hem göreve hem hedef modele göre süzülür |
-| 4 — Taslak | Kompakt veya XML iskelet, eşleşen alan paketiyle zenginleştirilir |
-| 5 — Öz-Denetim | Geçerli kapılar, ardından tek bir revizyon turu |
+| 0 — Hedef Modeli Çözümle | Açık hedef → oturum tespiti → host varsayılanı. Yönlendirme matrisini, bir canon'u ve bir profili yükler |
+| 1 — Analiz | Hedef, kısıtlar ve karmaşıklık skoru |
+| 2 — Alan Sınıflandırma | 25 alanlık taksonomiden tek baskın alan |
+| 3 — Pattern Seçimi | Görev ve hedefe göre süzülmüş, 14 pattern'in en küçük alt kümesi |
+| 4 — Taslak | Kompakt, XML veya markdown iskelet, alan paketiyle zenginleştirilmiş |
+| 5 — Öz-Denetim | Uygulanan kapılar, ardından bir revizyon turu |
 | 6 — Yürütme | Yalnızca `prompt_and_execute` modunda |
 
-Kaç model desteklenirse desteklensin her çalıştırmada üç dosya yüklenir: yönlendirme matrisi, ortak canon ve tek profil. Profil eklendikçe bağlam maliyeti sabit kalır.
+Kaç model desteklenirse desteklensin her çalıştırmada üç dosya yüklenir, bağlam maliyeti sabit kalır.
 
 ### Model profilleri
 
-| Profil | Belirleyici davranış |
-|---|---|
-| `opus-5` ★ varsayılan | Uzun yazar ve `effort` görünür çıktı uzunluğunu kısaltmaz; bu yüzden özlük açıkça istenmeli. Kendi işini doğrular — doğrulama talimatı eklemek aşırı doğrulamaya yol açar |
-| `opus-4-8` | Uzunluğu görev karmaşıklığına göre ayarlar. `xhigh` effort ile başla, en az `high` |
-| `sonnet-5` | `opus-4-8`'e en yakın olan; ancak effort zaten `high` varsayılanında ve kaynak kılavuzda subagent bölümü yok |
-| `fable-5` | Mythos 5'i de kapsar. Akıl yürütmesini yazdırmasını asla isteme ve iskeleti hafif tut — fazla kuralcı prompt'lar çıktısını düşürür |
+| Profil | Kapsar | Belirleyici davranış |
+|---|---|---|
+| `opus-5-5` ★ | claude-opus-5-5 | Effort varsayılanı `medium`; thinking kapatılamaz; uygulamalar arasında hızlı harekete geçer, kapsamla; doğrulama satırı yok |
+| `sonnet-5-5` | claude-sonnet-5-5 | Düşük effort'ta erken durup sorar, `xhigh`/`max`'ta fazlasını yapar; kod için gerçek kontrol ister |
+| `haiku-5-5` | claude-haiku-5-5 | Effort'lu ilk Haiku; uzun ajan prompt'larında erken durur; sohbette kural kalıcılığı satırı gerekir |
+| `fable-5-1` | claude-fable-5-1, claude-mythos-5-1 | Hafif iskelet, akıl yürütmeyi asla yazdırma, yalnızca eklemeli geçmiş, doğrulayıcı alt ajanlar |
+| `gpt-sol` ★ | gpt-6.1-sol, gpt-6-sol, gpt-5.6-sol | Ana iş modeli; kısıtlar, done-when ve kontrol komutu |
+| `gpt-astra` | gpt-6-astra | Öncü model; adım listesi yerine niyet |
+| `gpt-terra` | gpt-6.1-terra, gpt-5.6-terra | Dengeli; işçi alt ajanlar için özet dönüş formatı |
+| `gpt-luna` | gpt-6-luna, gpt-5.6-luna | Hızlı; tek dar hedef, kesin format, örnekler |
+| `generic` | diğer her şey | Taşınabilir form, sağlayıcı ayarı yok |
+
+Eski Claude profilleri (`opus-5`, `sonnet-5`, `opus-4-8`, `fable-5`) `references/models/legacy/` altındadır.
 
 ---
 
@@ -189,56 +199,59 @@ Kaç model desteklenirse desteklensin her çalıştırmada üç dosya yüklenir:
 
 ```
 prompt-architect/
-├── SKILL.md                          # Skill giriş noktası + 7 aşamalı akış
-├── references/
-│   ├── models/
-│   │   ├── _matrix.md                # Yönlendirme + davranış matrisi (her zaman okunur)
-│   │   ├── _shared-canon.md          # Modelden bağımsız canon (her zaman okunur)
-│   │   └── {opus-5,opus-4-8,sonnet-5,fable-5}.md
-│   ├── claude-prompting-patterns.md  # 14 pattern + harness seviyesi kontroller
-│   ├── quality-gates.md              # 11 kapı, 4'ü modele koşullu
-│   ├── domain-taxonomy.md            # 25 alan, TR + EN sinyaller
-│   ├── mode-inference.md             # prompt_only ve prompt_and_execute ayrımı
-│   └── claude-md-rules.md            # Çift katmanlı uygulanan yazım kuralları
-├── assets/templates/
-│   ├── refined-prompt-xml.tmpl       # XML iskelet (orta/karmaşık görevler)
-│   ├── refined-prompt-compact.tmpl   # Madde iskeleti (basit görevler, Fable 5)
-│   └── domain-*.tmpl                 # 6 alan paketi
-└── scripts/
-    ├── detect_model.py               # Oturum modeli + effort çözümleme
-    └── validate_prompt.py            # Kalite kapısı doğrulayıcı (yalnız stdlib)
+├── .claude-plugin/plugin.json        # Claude Code manifesti
+├── .codex-plugin/plugin.json         # Codex manifesti
+├── AGENTS.md / CLAUDE.md             # Ajanlar için depo rehberi
+└── skills/prompt-architect/
+    ├── SKILL.md                      # Giriş noktası + 7 aşamalı akış
+    ├── references/
+    │   ├── models/
+    │   │   ├── _matrix.md            # Yönlendirme + matrisler (her zaman okunur)
+    │   │   ├── _shared-canon.md      # Claude canon'u
+    │   │   ├── _generic.md           # Ayarlanmamış taşınabilir form
+    │   │   ├── {opus-5-5,sonnet-5-5,haiku-5-5,fable-5-1}.md
+    │   │   ├── legacy/               # Opus 5, Sonnet 5, Opus 4.8, Fable 5
+    │   │   └── openai/               # OpenAI canon'u + Sol/Astra/Terra/Luna
+    │   ├── claude-prompting-patterns.md
+    │   ├── quality-gates.md          # 12 kapı, N/A kuralı
+    │   ├── domain-taxonomy.md
+    │   ├── mode-inference.md
+    │   └── working-rules.md          # Genel kurallar, iki katmanda
+    ├── assets/templates/             # xml, compact, markdown + 6 alan paketi
+    └── scripts/
+        ├── detect_model.py           # Host/model/effort → profil
+        └── validate_prompt.py        # Kalite kapısı doğrulayıcı
 ```
 
 ---
 
 ## Sınırlamalar
 
-- **Model ayarlaması yalnızca Anthropic için.** Düzenlenmiş prompt'lar GPT, Gemini ve diğer modellerde çalışmaya devam eder, ancak sağlayıcıya özel bir ayar taşımaz. Anthropic dışı bir hedef belirttiğinde skill jenerik biçimi üretir ve başka bir sağlayıcının davranışını tahmin etmek yerine bunu açıkça söyler.
-- **Profiller kendini tazelemez.** Her biri köken bilgisi olarak bir `last_verified` tarihi taşır; hiçbir şey bunu kontrol etmez veya güncellemez. Anthropic'in dokümanları hızlı değişiyor — Temmuz 2026'da 12 günde 125 URL değişti, `adaptive-thinking` silindi, prefill 400'e döndü. Önemli olduğunda profilleri elle yeniden türet ve tarihi güncelle. Karşılığında skill'in çalışma anında hiç ağ bağımlılığı olmaz.
-- **Model tespiti Claude Code'a özgü.** `detect_model.py` Claude Code oturum transcript'ini okur. Diğer ajanlar varsayılan profile düşer; bu bir hata değil, amaçlanan davranıştır. Aynı dizinde birden çok eşzamanlı oturum varsa "en son değişen" seçimi yanlış transcript'i seçebilir — önemliyse hedefi açıkça belirt.
-- **Kapı denetimleri sezgiseldir.** Regex ve yapısal tarama; yaygın eksikleri ucuza yakalamak için tasarlandı. Prompt'u okumanın yerini tutmaz.
+- **Profiller kendini güncellemez.** Her biri köken bilgisi olarak bir `last_verified` tarihi (2026-11-02) taşır. Modeller değişince elle yeniden türet. Karşılığında çalışma anında ağ gerekmez.
+- **Bazı ID'ler çıkarımdır.** `claude-opus-5-5` canlı bir oturumdan doğrulandı; Sonnet 5.5, Haiku 5.5 ve Fable/Mythos 5.1 ID'leri Anthropic'in adlandırma kalıbını izler. Profiller bu tür bilgileri doğrulanmamış olarak işaretler.
+- **OpenAI rehberliği Claude'unkinden incedir.** Katman davranışı Codex model kataloğundan ve belgelerinden gelir; GPT-6.1 için modele özel bir prompting rehberi yok. Doğrulanmamış noktalar etiketlidir.
+- **Tespit için Claude Code veya Codex gerekir.** Diğer ajanlar açık hedefi veya generic profili kullanır.
+- **Kapı kontrolleri sezgiseldir.** Regex ve yapı taraması; prompt'u okumanın yerini tutmaz.
 
 ---
 
 ## Sorun Giderme
 
-**Skill tetiklenmiyor** — Dizinin `~/.claude/skills/prompt-architect` konumunda ve `SKILL.md` dosyasının kökünde olduğunu doğrula, sonra oturumu yeniden başlat. Skill'ler başlangıçta keşfedilir.
+**Skill tetiklenmiyor.** Eklentinin kurulu olduğunu kontrol et (`claude plugin list` veya `codex plugin list`) ve oturumu yeniden başlat.
 
-**`detect_model.py` sürekli `"source": "default"` dönüyor** — Ya Claude Code içinde çalışmıyorsun ya da mevcut çalışma dizini için henüz bir transcript yok. Bunun yerine hedef modeli isteğinde açıkça belirt.
+**`detect_model.py` `"host": "unknown"` döndürüyor.** Claude Code ve Codex dışındasın ya da oturum ortam değişkenleri script'e geçmiyor. Hedef modeli adıyla söyle veya `PROMPT_ARCHITECT_MODEL` ayarla.
 
-**v2.x altında geçen bir prompt artık kalıyor** — Beklenen durum. v3.0.0, 7. kapıyı tersine çevirdi ve 9–11. kapıları ekledi. `<scratchpad>` direktifi, "review your output" hatırlatıcısı veya eksik bir kapsam bloğu artık işaretlenir. Her birinin gerekçesi için [CHANGELOG](CHANGELOG.md) dosyasına bak.
-
-**`validate_prompt.py` 11'den az kapı sayısı bildiriyor** — Doğru davranış. 9. kapı yalnızca `opus-5`, 11. kapı yalnızca `opus-5` ve `fable-5` için geçerlidir; bu yüzden payda hedefe göre değişir.
+**v3'te geçen bir prompt şimdi kalıyor.** Beklenen durum. v4, akıl yürütmeyi yazdırma talimatını tüm güncel Claude modellerinde kesin hata yapar, Codex hedefleri için Kapı 12'yi ekler ve Claude hedeflerinde markdown bölümlerini hatalı sayar. Ayrıntılar [CHANGELOG](CHANGELOG.md)'da.
 
 ---
 
 ## Lisans
 
-MIT — [LICENSE](LICENSE) dosyasına bak.
+MIT — bkz. [LICENSE](LICENSE).
 
 ---
 
 <div align="center">
 <a href="https://github.com/sametbrr/prompt-architect/issues">Hata Bildir</a> ·
-<a href="https://github.com/sametbrr/prompt-architect/issues">Özellik Öner</a>
+<a href="https://github.com/sametbrr/prompt-architect/issues">Özellik İste</a>
 </div>

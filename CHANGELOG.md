@@ -4,6 +4,32 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-11-02
+
+Works as a plugin in both Claude Code and OpenAI Codex, detects the host and model it runs on, and tunes prompts for current Claude and OpenAI models. Major bump: the layout moved, profile names changed, the default profile changed, and the gate set changed.
+
+### Added
+- **Codex support.** `.codex-plugin/plugin.json` manifest; the skill now lives in `skills/prompt-architect/` (Codex ignores a root-level SKILL.md). `AGENTS.md` plus a one-line `CLAUDE.md` (`@AGENTS.md`).
+- **Claude 5.5 / 5.1 profiles:** `opus-5-5` (new default), `sonnet-5-5`, `haiku-5-5`, `fable-5-1` (covers Mythos 5.1), from the per-model prompting guides. Facts the guides don't state are marked unverified.
+- **OpenAI profiles** in `references/models/openai/`: a shared OpenAI/Codex canon (AGENTS.md layering, reasoning effort `low`…`ultra`, `model_verbosity`, differences from Claude prompting, GPT-6.x vs GPT-5.6 harness deltas) and tier profiles `gpt-sol` (OpenAI default), `gpt-astra`, `gpt-terra`, `gpt-luna`, built from the live `codex debug models` catalog.
+- `_generic.md` profile for unknown hosts and non-Claude, non-OpenAI targets.
+- `assets/templates/refined-prompt-markdown.tmpl` (Goal / Context / Steps / Constraints / Done when / Output) for Codex targets.
+- **Gate 12, Completion Criteria** (OpenAI targets): a done-when line, with a tip when no check command is named.
+- `detect_model.py --model "<name>"` resolves an explicit target or alias ("Opus 5.5", "GPT-6 Astra") to a profile and its files. Bare family or host names ("Codex", "Claude", "Sonnet", "Astra") resolve to that family's current profile, and Bedrock / Vertex IDs (`us.anthropic.claude-…-v1:0`, `claude-…@date`) are normalised.
+
+### Changed
+- **`detect_model.py` rewritten** per the compat contract: override env (`PROMPT_ARCHITECT_MODEL` / `PROMPT_ARCHITECT_EFFORT`) → Codex (`CODEX_THREAD_ID`, last `turn_context` in the rollout file, then `config.toml`) → Claude Code (`CLAUDE_CODE_SESSION_ID` transcript glob, effort from `CLAUDE_EFFORT`) → generic. Output now carries `host`, `model`, `effort`, `family`, `profile`, `profile_files`, `source`, `note`. When both hosts' variables are present (one launched from inside the other), the host with the most recently written session file wins. `CLAUDE_CONFIG_DIR` is honoured. Session files are read from the tail in growing chunks and malformed lines are skipped. Matching is truly longest-prefix on a token boundary, so `claude-opus-5-5` no longer falls into `opus-5` and `claude-haiku-5-5` no longer maps to Opus. No cwd sanitising (it broke on `.`, `_` and spaces).
+- **`validate_prompt.py`** accepts every profile and any resolvable model ID (`--target-model opus-5-5` used to exit 2). Gates report PASS / FAIL / WARN / **N/A**, and N/A gates are no longer counted as passes. Gate 10 (reasoning echo) is a hard fail on every current Claude profile; Gate 9 warns on Opus 5.5 (carried over from Opus 5, unverified); Gate 2 fails markdown-sectioned prompts on Claude targets and is N/A on OpenAI targets.
+- Opus 5, Sonnet 5, Opus 4.8 and Fable 5 moved to `references/models/legacy/`.
+- `_matrix.md`: new defaults (`opus-5-5`, `gpt-sol`, `generic`), host-aware resolution, ID table for both families, Claude and OpenAI matrices, `last_verified` 2026-11-02.
+- `_shared-canon.md`: table of request parameters that now return a 400 (prefill, sampling params, `budget_tokens`, disabling thinking on some models), forced `tool_choice` with adaptive thinking, and the `reasoning_extraction` refusal.
+- SKILL.md description rewritten to 970 characters (was 1151, over the 1024 limit), covering Claude and Codex triggers in Turkish and English. It now says that an imperative on a concrete deliverable ("strateji hazırla") returns the finished work, matching mode inference, which the SKILL.md mode table now states explicitly. Gates 11 and 12 apply in both modes. It now says Turkish or English input, matching the body (it used to claim any language). `compatibility` no longer says Anthropic-only.
+- `release.yml` reads the version from `.claude-plugin/plugin.json`, cross-checks the Codex manifest and SKILL.md, and still passes notes through `--notes-file`.
+- READMEs: model coverage and marketplace install for both hosts.
+
+### Removed
+- `references/claude-md-rules.md`, which quoted one user's personal CLAUDE.md rules. Replaced by `references/working-rules.md`: seven generic working rules, with the user's own `AGENTS.md` / `CLAUDE.md` taking precedence. Stage text no longer cites "CLAUDE.md Rule #N".
+
 ## [3.0.0] - 2026-07-31
 
 Reconciled the skill against Anthropic's current prompting canon and made the refined prompt **model-aware**. Major bump: two patterns changed meaning and one quality gate inverted, so prompts produced by 2.x will not all pass 3.0.0's review.

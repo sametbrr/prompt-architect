@@ -6,7 +6,7 @@
 
 # Prompt Architect
 
-An Agent Skill that turns any rough idea into a domain-classified, model-aware, quality-reviewed expert prompt. Accepts Turkish and English input.
+An Agent Skill and plugin for Claude Code and OpenAI Codex that turns a rough idea into a domain-classified, model-aware, quality-reviewed expert prompt. It detects which host and model it is running on and tunes the prompt for Claude or OpenAI models. Accepts Turkish and English input.
 
 > 🇹🇷 Türkçe için [README.tr.md](README.tr.md)
 
@@ -15,13 +15,15 @@ An Agent Skill that turns any rough idea into a domain-classified, model-aware, 
 ## Quick Start
 
 ```bash
-git clone https://github.com/sametbrr/prompt-architect.git ~/.claude/skills/prompt-architect
+claude plugin marketplace add sametbrr/skill-hub
+claude plugin install prompt-architect@skill-hub
 ```
 
-Restart your Claude Code session, then trigger naturally:
+Then trigger it naturally, in Claude Code or Codex:
 
 ```
 > "Turn this into an expert prompt: build an onboarding strategy for a B2B SaaS"
+> "Write this prompt for GPT-6.1 Sol: add rate limiting to /search"
 ```
 
 ---
@@ -30,58 +32,67 @@ Restart your Claude Code session, then trigger naturally:
 
 | Feature | What it does |
 |---|---|
-| Target model resolution | Reads the active Claude model and effort level from the session, or takes an explicit target. Falls back to `opus-5` |
-| Model-specific tuning | Injects, omits, or trims prompt blocks per model — Opus 5 gets a conciseness block and no verification instruction, Fable 5 gets a lighter scaffold |
+| Host + model detection | Detects Claude Code or Codex and reads the active model and effort from the local session file. Explicit targets always win |
+| Claude profiles | Opus 5.5 (default), Sonnet 5.5, Haiku 5.5, Fable 5.1 / Mythos 5.1, plus legacy Opus 5, Sonnet 5, Opus 4.8 and Fable 5 |
+| OpenAI profiles | Codex tiers from the live model catalog: Sol (gpt-6.1-sol, gpt-6-sol, gpt-5.6-sol), Astra (gpt-6-astra), Terra (gpt-6.1-terra, gpt-5.6-terra), Luna (gpt-6-luna, gpt-5.6-luna) |
+| Model-specific tuning | Opus 5.5 gets a scope block and no verification line; Sonnet/Haiku 5.5 get completion and real-check lines; Fable 5.1 gets a light scaffold; Codex models get markdown sections with constraints, done-when and a check command |
 | Domain classification | Matches input against a 25-domain taxonomy with Turkish and English signal keywords |
-| Pattern selection | Picks the minimum viable subset of 14 prompting patterns for the task at hand |
-| Two scaffolds | Compact bullet body for simple tasks, full XML body for complex ones |
-| 11-gate self-review | Seven universal gates plus four that change behaviour with the target model |
-| Bilingual input | Turkish or English in; the refined prompt body is always English for portability |
-| Optional execution | Generates the deliverable and writes structured output to a file — only when asked |
-
-The refined prompt body is always written in English. Section labels follow the user's input language.
+| Pattern selection | Picks the minimum subset of 14 prompting patterns for the task |
+| Three scaffolds | Compact bullets for simple tasks, XML for complex Claude prompts, markdown sections for Codex |
+| 12-gate self-review | Gates that don't apply are reported as N/A and never counted as passes |
+| Bilingual input | Turkish or English in; the refined prompt body is always English |
+| Optional execution | Generates the deliverable and writes structured output to a file, only when asked |
 
 ---
 
 ## Requirements
 
-- Python 3.10+ — for the two scripts. Standard library only, no `pip install`
-- Claude Code, or any [agentskills.io](https://agentskills.io)-compatible agent
+- Python 3.10+ for the two scripts. Standard library only, no `pip install`
+- Claude Code, Codex, or any [agentskills.io](https://agentskills.io)-compatible agent
 
-Model detection reads the Claude Code session transcript. Other agents still run the skill; they fall back to the default model profile.
+Model detection reads the Claude Code session transcript or the Codex rollout file. Other agents still run the skill; they use an explicit target or the generic profile.
 
 ---
 
 ## Installation
 
 ```bash
-git clone https://github.com/sametbrr/prompt-architect.git ~/.claude/skills/prompt-architect
+# Claude Code
+claude plugin marketplace add sametbrr/skill-hub
+claude plugin install prompt-architect@skill-hub
+# Codex
+codex plugin marketplace add sametbrr/skill-hub
+codex plugin add prompt-architect@skill-hub
+# Manual (any Agent Skills client): copy skills/prompt-architect into ~/.claude/skills/ or ~/.agents/skills/
 ```
 
-Claude Code auto-discovers skills under `~/.claude/skills/`. Restart your session after cloning.
-
-For a project-scoped install, clone into `.claude/skills/` inside the repository instead.
+Restart the session after installing; skills are discovered at startup.
 
 ### Uninstall
 
 ```bash
-rm -rf ~/.claude/skills/prompt-architect
+claude plugin uninstall prompt-architect@skill-hub   # Claude Code
+codex plugin remove prompt-architect@skill-hub       # Codex
 ```
 
-The skill writes nothing outside its own directory — no hooks, no config files, no PATH changes. Removing the directory is a complete uninstall.
+For a manual install, delete the copied `prompt-architect` folder. The skill writes nothing outside the files you ask it to create: no hooks, no config, no cache.
 
 ---
 
 ## Usage
 
+Run the scripts from `skills/prompt-architect/`:
+
 ```bash
 # Validate a drafted prompt against the quality gates
-python3 scripts/validate_prompt.py --stdin --target-model opus-5 < draft-prompt.txt
+python3 scripts/validate_prompt.py --stdin --target-model opus-5-5 < draft-prompt.txt
+python3 scripts/validate_prompt.py draft.md --target-model gpt-6.1-sol
 
-# Resolve the active model and effort from the current session
+# Resolve the active host, model and effort, or an explicit target
 python3 scripts/detect_model.py
+python3 scripts/detect_model.py --model "Sonnet 5.5"
 
-# Run built-in checks for either script
+# Built-in checks
 python3 scripts/validate_prompt.py --self-test
 python3 scripts/detect_model.py --self-test
 ```
@@ -91,45 +102,42 @@ python3 scripts/detect_model.py --self-test
 | You want… | Say something like… | Mode |
 |---|---|---|
 | Just the refined prompt | `just the prompt`, `prompt only`, `don't run it` | `prompt_only` (default) |
-| Prompt + the actual deliverable | `run it`, `execute it`, `generate the output too` | `prompt_and_execute` |
+| Prompt + the actual deliverable | `run it`, `execute it`, `generate the output too`, or an imperative on the deliverable: `draft the strategy`, `strateji hazırla` | `prompt_and_execute` |
 
 ### Targeting a specific model
 
-The skill resolves the target in this order: an explicit target you name, then the session model, then `opus-5`.
+The skill resolves the target in this order: an explicit target you name, then the detected session model, then the host default (`opus-5-5` in Claude Code, `gpt-sol` in Codex, `generic` elsewhere).
 
 ```
-> "Write this prompt for Opus 4.8: summarize quarterly financials"
-> "Fable 5'e göre ayarla"
+> "Write this prompt for Haiku 5.5: classify support tickets"
+> "GPT-6 Astra için ayarla"
+> "Codex için AGENTS.md kuralı yaz: testleri her zaman çalıştır"
 ```
 
-An unrecognised model falls back to the `opus-5` profile rather than to generic advice — a current flagship profile fits an unknown new model better than no profile at all.
+Unknown newer Claude models use the Opus 5.5 profile and unknown GPT models the Sol profile, with a note. Other providers (Gemini, Llama…) get the generic, untuned form.
 
-### `validate_prompt.py`
+### `detect_model.py`
 
-Scores a prompt against the quality gates and exits non-zero on failure.
+Prints one JSON object. Local file reads only, no network.
 
 ```bash
-python3 scripts/validate_prompt.py draft.txt --target-model fable-5
+$ python3 scripts/detect_model.py
+{"host": "claude-code", "model": "claude-opus-5-5", "effort": "high", "source": "session",
+ "family": "claude", "profile": "opus-5-5",
+ "profile_files": ["references/models/_matrix.md", "references/models/_shared-canon.md", "references/models/opus-5-5.md"], ...}
 ```
+
+Detection order: `PROMPT_ARCHITECT_MODEL` / `PROMPT_ARCHITECT_EFFORT` override → Codex (`CODEX_THREAD_ID`, last `turn_context` in the rollout file, then `config.toml`) → Claude Code (`CLAUDE_CODE_SESSION_ID` transcript under `CLAUDE_CONFIG_DIR` or `~/.claude`, effort from `CLAUDE_EFFORT`) → unknown host. If both hosts' variables are set, the host with the most recently written session file wins. Session files are read from the end and malformed lines are skipped.
+
+### `validate_prompt.py`
 
 | Flag | Purpose |
 |---|---|
 | `--stdin` | Read the prompt from standard input |
-| `--target-model` | One of `opus-5` (default), `opus-4-8`, `sonnet-5`, `fable-5` |
-| `--self-test` | Run the built-in cases, including proof that the inverted gates fire |
+| `--target-model` | A profile (`opus-5-5`, `sonnet-5-5`, `haiku-5-5`, `fable-5-1`, `gpt-sol`, `gpt-astra`, `gpt-terra`, `gpt-luna`, `generic`, legacy stems) or any model ID such as `gpt-5.6-terra`. Default `opus-5-5` |
+| `--self-test` | Run the built-in cases |
 
-Gates 1–6 and 8 always apply. Gates 7, 9, 10 and 11 change behaviour with the target, so the score is `N/N` where `N` is the applicable count.
-
-### `detect_model.py`
-
-Prints the active model as JSON. Local file read only — no network, no cache file, no hook.
-
-```bash
-$ python3 scripts/detect_model.py
-{"id": "claude-opus-5", "effort": "xhigh", "profile": "opus-5", "source": "session", "transcript": "..."}
-```
-
-When no transcript is readable it returns `{"source": "default", "profile": "opus-5"}` and exits 0 — an undetectable model is a normal outcome, not an error.
+Each gate reports PASS, FAIL, WARN or N/A. The score is `passed / applicable`; N/A gates are listed but not counted. Exit code 1 when any gate fails.
 
 ### Example
 
@@ -139,20 +147,17 @@ When no transcript is readable it returns `{"source": "default", "profile": "opu
 **Output (abbreviated):**
 
 ```
-Target Model: Opus 5 (detected from session · effort: xhigh) — profile: opus-5
+Target Model: Opus 5.5 (detected · host: claude-code · effort: high) — profile: opus-5-5
 Detected Domain: Product Growth Strategy
 Complexity: moderate
 Selected Patterns: Role, XML Structuring, Positive Guidance, Scope Boundaries,
                    Verbosity Control, Output Framing
-Model-Specific Adjustments: conciseness block added; scope_boundaries added;
-                   verification instruction deliberately omitted (Opus 5 over-verifies)
-
+Model-Specific Adjustments: scope_boundaries added; tone_preference added;
+                   verification line omitted (Opus 5.5)
 Refined English Prompt:
 <role>You are a senior product growth strategist...</role>
-<task>Design a B2B SaaS onboarding strategy...</task>
 ...
-
-Self-Review: 11/11 gates passed
+Self-Review: 9/9 applicable gates passed (0 warnings, 3 N/A)
 Final Output: Saved to ./onboarding-strategy-output.md
 ```
 
@@ -160,28 +165,33 @@ Final Output: Saved to ./onboarding-strategy-output.md
 
 ## How It Works
 
-Seven stages run in order. Stage 0 gates everything after it, because the target model decides which patterns apply and which quality gates fire.
-
 | Stage | What happens |
 |---|---|
-| 0 — Resolve Target Model | Explicit target → session detection → `opus-5`. Loads the routing matrix, the shared canon, and exactly one model profile |
-| 1 — Analyze | Objective, constraints, and a complexity score (simple / moderate / complex) |
-| 2 — Classify Domain | Single dominant domain from the 25-domain taxonomy, plus a supporting one if it shapes the deliverable |
-| 3 — Select Patterns | The minimum viable subset of 14 patterns, filtered by both task and target model |
-| 4 — Draft | Compact or XML scaffold, enriched with the matching domain pack |
+| 0 — Resolve Target Model | Explicit target → session detection → host default. Loads the routing matrix, one canon and one profile |
+| 1 — Analyze | Objective, constraints, and a complexity score |
+| 2 — Classify Domain | Single dominant domain from the 25-domain taxonomy |
+| 3 — Select Patterns | The minimum subset of 14 patterns, filtered by task and target |
+| 4 — Draft | Compact, XML or markdown scaffold, enriched with the domain pack |
 | 5 — Self-Review | The applicable gates, then one revision pass |
 | 6 — Execute | Only in `prompt_and_execute` mode |
 
-Three files load per run regardless of how many models are supported: the routing matrix, the shared canon, and one profile. Context cost stays flat as profiles are added.
+Three files load per run however many models are supported, so context cost stays flat.
 
 ### Model profiles
 
-| Profile | Defining behaviour |
-|---|---|
-| `opus-5` ★ default | Runs long and `effort` does not shorten visible output, so conciseness must be prompted. Self-verifies — adding a verification instruction causes over-verification |
-| `opus-4-8` | Calibrates length to task complexity. Start at `xhigh` effort, minimum `high` |
-| `sonnet-5` | Closest to `opus-4-8`, but effort already defaults to `high` and the source guide has no subagent section |
-| `fable-5` | Covers Mythos 5. Never instruct it to echo its reasoning, and keep the scaffold light — over-prescriptive prompts degrade its output |
+| Profile | Covers | Defining behaviour |
+|---|---|---|
+| `opus-5-5` ★ | claude-opus-5-5 | Effort defaults to `medium`; thinking can't be disabled; acts fast across apps, so scope it; no verification line |
+| `sonnet-5-5` | claude-sonnet-5-5 | Checks in early at low effort, over-does at `xhigh`/`max`; wants a real check for code |
+| `haiku-5-5` | claude-haiku-5-5 | First Haiku with effort; stops early on long agent prompts; needs rule-persistence lines in chat |
+| `fable-5-1` | claude-fable-5-1, claude-mythos-5-1 | Light scaffold, never echo reasoning, append-only history, verifier subagents |
+| `gpt-sol` ★ | gpt-6.1-sol, gpt-6-sol, gpt-5.6-sol | Workhorse; constraints, done-when and a check command |
+| `gpt-astra` | gpt-6-astra | Frontier; intent over step lists |
+| `gpt-terra` | gpt-6.1-terra, gpt-5.6-terra | Balanced; distilled return formats for worker subagents |
+| `gpt-luna` | gpt-6-luna, gpt-5.6-luna | Fast; one narrow objective, exact format, examples |
+| `generic` | everything else | Portable form, no provider tuning |
+
+Legacy Claude profiles (`opus-5`, `sonnet-5`, `opus-4-8`, `fable-5`) live in `references/models/legacy/`.
 
 ---
 
@@ -189,46 +199,49 @@ Three files load per run regardless of how many models are supported: the routin
 
 ```
 prompt-architect/
-├── SKILL.md                          # Skill entrypoint + 7-stage workflow
-├── references/
-│   ├── models/
-│   │   ├── _matrix.md                # Routing + behavioural matrix (always read)
-│   │   ├── _shared-canon.md          # Model-independent canon (always read)
-│   │   └── {opus-5,opus-4-8,sonnet-5,fable-5}.md
-│   ├── claude-prompting-patterns.md  # 14 patterns + harness-level controls
-│   ├── quality-gates.md              # 11 gates, 4 model-conditional
-│   ├── domain-taxonomy.md            # 25 domains, TR + EN signals
-│   ├── mode-inference.md             # prompt_only vs prompt_and_execute
-│   └── claude-md-rules.md            # Authoring rules applied dual-layer
-├── assets/templates/
-│   ├── refined-prompt-xml.tmpl       # XML scaffold (moderate/complex tasks)
-│   ├── refined-prompt-compact.tmpl   # Bullet scaffold (simple tasks, Fable 5)
-│   └── domain-*.tmpl                 # 6 domain packs
-└── scripts/
-    ├── detect_model.py               # Session model + effort resolution
-    └── validate_prompt.py            # Quality-gate validator (stdlib only)
+├── .claude-plugin/plugin.json        # Claude Code manifest
+├── .codex-plugin/plugin.json         # Codex manifest
+├── AGENTS.md / CLAUDE.md             # Repo guidance for agents
+└── skills/prompt-architect/
+    ├── SKILL.md                      # Entry point + 7-stage workflow
+    ├── references/
+    │   ├── models/
+    │   │   ├── _matrix.md            # Routing + matrices (always read)
+    │   │   ├── _shared-canon.md      # Claude canon
+    │   │   ├── _generic.md           # Untuned portable form
+    │   │   ├── {opus-5-5,sonnet-5-5,haiku-5-5,fable-5-1}.md
+    │   │   ├── legacy/               # Opus 5, Sonnet 5, Opus 4.8, Fable 5
+    │   │   └── openai/               # OpenAI canon + Sol/Astra/Terra/Luna
+    │   ├── claude-prompting-patterns.md
+    │   ├── quality-gates.md          # 12 gates, N/A handling
+    │   ├── domain-taxonomy.md
+    │   ├── mode-inference.md
+    │   └── working-rules.md          # Generic rules, applied dual-layer
+    ├── assets/templates/             # xml, compact, markdown + 6 domain packs
+    └── scripts/
+        ├── detect_model.py           # Host/model/effort → profile
+        └── validate_prompt.py        # Quality-gate validator
 ```
 
 ---
 
 ## Limitations
 
-- **Model tuning is Anthropic-only.** Refined prompts remain portable to GPT, Gemini and other models, but carry no provider-specific tuning. When you name a non-Anthropic target, the skill produces the generic form and says so rather than guessing at another vendor's behaviour.
-- **Profiles do not refresh themselves.** Each carries a `last_verified` date as provenance; nothing checks or updates it. Anthropic's docs move quickly — 125 URL changes in 12 days during July 2026, with `adaptive-thinking` deleted and prefill turned into a 400. Re-derive the profiles by hand when it matters, and bump the date. In exchange, the skill has zero network dependency at runtime.
-- **Model detection is Claude Code specific.** `detect_model.py` reads the Claude Code session transcript. Other agents fall back to the default profile, which is intended behaviour rather than a failure. With several concurrent sessions in one directory, newest-by-modification-time can pick the wrong transcript — name the target explicitly if that matters.
-- **Gate checks are heuristic.** Regex and structural scanning, designed to catch common omissions cheaply. Not a substitute for reading the prompt.
+- **Profiles do not refresh themselves.** Each carries a `last_verified` date (2026-11-02) as provenance. Re-derive them when models change. In exchange, the runtime needs no network.
+- **Some IDs are inferred.** `claude-opus-5-5` is confirmed from a live session; the Sonnet 5.5, Haiku 5.5 and Fable/Mythos 5.1 IDs follow Anthropic's naming pattern. Profiles mark such facts as unverified.
+- **OpenAI guidance is thinner than Claude's.** Tier behaviour comes from the Codex model catalog and docs; there is no per-model prompting guide for GPT-6.1. Unverified points are labelled.
+- **Detection needs Claude Code or Codex.** Other agents get the explicit target or the generic profile.
+- **Gate checks are heuristic.** Regex and structure scans, not a substitute for reading the prompt.
 
 ---
 
 ## Troubleshooting
 
-**The skill doesn't trigger** — Confirm the directory sits at `~/.claude/skills/prompt-architect` with `SKILL.md` at its root, then restart the session. Skills are discovered at startup.
+**The skill doesn't trigger.** Check that the plugin is installed (`claude plugin list` or `codex plugin list`) and restart the session.
 
-**`detect_model.py` always returns `"source": "default"`** — Either you are not running inside Claude Code, or no transcript exists for the current working directory yet. Name the target model explicitly in your request instead.
+**`detect_model.py` returns `"host": "unknown"`.** You are outside Claude Code and Codex, or the session env vars aren't passed to the script. Name the target model, or set `PROMPT_ARCHITECT_MODEL`.
 
-**A prompt that passed under v2.x now fails** — Expected. v3.0.0 inverted Gate 7 and added Gates 9–11. A `<scratchpad>` directive, a "review your output" reminder, or a missing scope block will now be flagged. See the [CHANGELOG](CHANGELOG.md) for the reasoning behind each.
-
-**`validate_prompt.py` reports a gate count below 11** — Correct behaviour. Gate 9 applies only to `opus-5` and Gate 11 only to `opus-5` and `fable-5`, so the denominator varies by target.
+**A prompt that passed under v3 now fails.** Expected. v4 makes reasoning-echo a hard fail on every current Claude model, adds Gate 12 for Codex targets, and fails markdown sections on Claude targets. See the [CHANGELOG](CHANGELOG.md).
 
 ---
 

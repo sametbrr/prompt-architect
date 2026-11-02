@@ -1,14 +1,16 @@
 ---
 model: Claude Opus 5
 model_ids: [claude-opus-5, claude-opus-5[1m]]
-role: default profile
+role: legacy
 last_verified: 2026-07-31
 source: platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-opus-5 + about-claude/models/whats-new-opus-5
 ---
 
-# Profile — Claude Opus 5 ★ default
+# Profile — Claude Opus 5 (legacy)
 
-The fallback for any unresolved or unrecognised model. Thinking is **on by default**.
+> **Legacy profile.** Superseded by [Opus 5.5](../opus-5-5.md), the default Claude profile since v4.0.0. Use this file only when the target is explicitly `claude-opus-5`.
+
+Thinking is **on by default**.
 
 ---
 
@@ -73,7 +75,7 @@ Naming the tags specifically is less effective than this general form.
 
 ## 6. Effort
 
-Thinking on by default. Higher effort increases thinking volume, not response length. When detected effort is `xhigh` or `max` and the task is narrow, add the scope-containment block from [`_shared-canon.md`](_shared-canon.md#5-scope-containment).
+Thinking on by default. Higher effort increases thinking volume, not response length. When detected effort is `xhigh` or `max` and the task is narrow, add the scope-containment block from [`_shared-canon.md`](../_shared-canon.md#5-scope-containment).
 
 ## Gate implications
 

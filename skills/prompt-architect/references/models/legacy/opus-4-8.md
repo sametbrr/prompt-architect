@@ -7,6 +7,8 @@ source: platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompti
 
 # Profile — Claude Opus 4.8
 
+> **Legacy profile.** Use only when the target is explicitly `claude-opus-4-8`.
+
 The closest model to the skill's original (Opus 4.7-era) assumptions. Fewer overrides than Opus 5 or Fable 5.
 
 ---
@@ -47,7 +49,7 @@ Opus 4.8 has explicit subagent-control guidance. Cap delegation when the harness
 
 ## 4. Overeagerness
 
-Opus 4.5 and 4.6 tend to overengineer, and 4.8 inherits some of it: extra files, unnecessary abstractions, unrequested flexibility. Use the scope-containment block in [`_shared-canon.md`](_shared-canon.md#5-scope-containment) when the task is narrow or the detected effort is `xhigh`/`max`.
+Opus 4.5 and 4.6 tend to overengineer, and 4.8 inherits some of it: extra files, unnecessary abstractions, unrequested flexibility. Use the scope-containment block in [`_shared-canon.md`](../_shared-canon.md#5-scope-containment) when the task is narrow or the detected effort is `xhigh`/`max`.
 
 ## 5. Other axes
 

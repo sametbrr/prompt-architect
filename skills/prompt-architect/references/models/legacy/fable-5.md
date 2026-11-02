@@ -7,6 +7,8 @@ source: platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompti
 
 # Profile — Claude Fable 5 / Mythos 5
 
+> **Legacy profile.** Superseded by [Fable 5.1 / Mythos 5.1](../fable-5-1.md). Use only when the target is explicitly `claude-fable-5`, `claude-mythos-5` or `claude-mythos-preview`.
+
 The profile that most contradicts this skill's defaults. Read the hazard first.
 
 **Specs (both models):** `claude-fable-5` / `claude-mythos-5`, 1M-token context by default, up to 128k output per request, $10 / $50 per Mtok. Mythos 5 has the same capabilities without safety classifiers, available through Project Glasswing.

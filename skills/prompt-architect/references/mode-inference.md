@@ -12,6 +12,7 @@ Users almost never type the literal flag names. Infer from natural language.
 
 ```
 Did the user mention any execute-intent signal? ─── No ──→ prompt_only (default)
+(an imperative on a concrete deliverable — "strateji hazırla" — IS an execute signal)
                                                 │
                                                 Yes
                                                 │
@@ -54,6 +55,7 @@ Did the user also mention any "just the prompt" signal?
 | "promptu hazırla ve uygula" | "prepare the prompt and execute" |
 | "yap" (when paired with a deliverable noun) | "do it too" / "generate the output" |
 | "bana planı ver" | "give me the plan" |
+| "strateji hazırla" / "onboarding planı hazırla" / "domain analizi yap" (imperative on a deliverable noun, see precedence rule 3) | "draft the strategy" / "write the analysis" |
 
 ### Ambiguous patterns (default to prompt_only, note in Assumptions)
 
@@ -89,4 +91,4 @@ If signals are genuinely mixed (not just precedence-resolvable), choose `prompt_
 
 > Mode signal was ambiguous; defaulted to prompt_only. Reply "uygula" or "run it" if you want execution.
 
-This satisfies CLAUDE.md Rule #7 (state uncertainty explicitly) without breaking flow with a question.
+This satisfies the "state uncertainty" working rule without breaking flow with a question.

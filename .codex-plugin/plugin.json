@@ -1,0 +1,25 @@
+{
+  "name": "prompt-architect",
+  "version": "4.0.0",
+  "description": "Turns rough Turkish or English requests into structured, domain-aware expert prompts tuned per model for Claude (Opus, Sonnet, Haiku, Fable) and OpenAI Codex (GPT-6.x, GPT-5.6), with a quality-gate self-review",
+  "author": { "name": "sametbrr", "email": "sametbrr@gmail.com", "url": "https://github.com/sametbrr" },
+  "homepage": "https://github.com/sametbrr/prompt-architect",
+  "repository": "https://github.com/sametbrr/prompt-architect",
+  "license": "MIT",
+  "keywords": ["prompting", "prompt-engineering", "model-aware", "agent-skills", "claude-code", "codex"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Prompt Architect",
+    "shortDescription": "Model-aware expert prompts for Claude and Codex",
+    "longDescription": "Detects the host and active model, loads the matching Claude or OpenAI GPT profile, classifies the domain, picks prompting patterns and drafts an English expert prompt with a quality-gate self-review. Accepts Turkish or English input and can execute the deliverable on request.",
+    "developerName": "sametbrr",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": [
+      "Turn this into an expert prompt",
+      "Write this prompt for GPT-6.1 Sol",
+      "Opus 5.5 için prompt yaz"
+    ],
+    "websiteURL": "https://github.com/sametbrr/prompt-architect"
+  }
+}
