@@ -256,6 +256,15 @@ prompt-architect/
 
 ---
 
+## Katkıda Bulunma
+
+- Sorular ve fikirler: [Discussions](https://github.com/sametbrr/prompt-architect/discussions)
+- Hatalar: [issue takibi](https://github.com/sametbrr/prompt-architect/issues)
+- Pull request'ler: önce [katkı rehberini](https://github.com/sametbrr/.github/blob/main/CONTRIBUTING.md) okuyun
+- Güvenlik bildirimleri: herkese açık issue yerine [güvenlik politikasını](https://github.com/sametbrr/prompt-architect/security/policy) izleyin
+
+---
+
 ## Lisans
 
 MIT — bkz. [LICENSE](LICENSE).

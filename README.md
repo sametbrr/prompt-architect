@@ -256,6 +256,15 @@ prompt-architect/
 
 ---
 
+## Contributing
+
+- Questions and ideas: [Discussions](https://github.com/sametbrr/prompt-architect/discussions)
+- Bugs: [issue tracker](https://github.com/sametbrr/prompt-architect/issues)
+- Pull requests: read the [contribution guide](https://github.com/sametbrr/.github/blob/main/CONTRIBUTING.md) first
+- Security reports: follow the [security policy](https://github.com/sametbrr/prompt-architect/security/policy), not a public issue
+
+---
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
